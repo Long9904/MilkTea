@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+#Git ignore
+src/main/resources/application-dev.properties
