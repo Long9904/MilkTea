@@ -9,7 +9,7 @@ public class DuplicateException extends RuntimeException {
     private final List<String> details;
 
     public DuplicateException(List<String> details) {
-        super("VALIDATION_ERROR");
+        super("DUPLICATE");
         this.details = details;
     }
 }
