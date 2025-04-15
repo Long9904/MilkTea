@@ -1,14 +1,19 @@
 package com.src.milkTea.service;
 
 import com.src.milkTea.dto.UserDTO;
+import com.src.milkTea.dto.request.LoginRequest;
 import com.src.milkTea.dto.request.RegisterRequest;
+import com.src.milkTea.dto.response.LoginResponse;
 import com.src.milkTea.entities.User;
 import com.src.milkTea.enums.UserRoleEnum;
 import com.src.milkTea.enums.UserStatusEnum;
+import com.src.milkTea.exception.AuthenticationException;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.repository.AuthenticationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,13 +35,20 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     private final ModelMapper modelMapper;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenService tokenService;
+
     public AuthenticationService(ModelMapper modelMapper) {
         this.modelMapper = modelMapper;
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return authenticationRepository.findUserByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
     // Dùng để đăng kí tài khoản bởi admin --> tự generate info sau đó staff sẽ tự động update
@@ -63,8 +75,38 @@ public class AuthenticationService implements UserDetailsService {
         modelMapper.map(registerRequest, user);
         user.setPassword(passwordEncoder.encode("Password123"));
         user.setRole(UserRoleEnum.STAFF);
-        user.setStatus(UserStatusEnum.INACTIVE); // ACTIVE when staff update info
+        user.setStatus(UserStatusEnum.ACTIVE);
         authenticationRepository.save(user);
         return modelMapper.map(user, UserDTO.class);
+    }
+
+    public LoginResponse login(LoginRequest loginRequest) {
+        /*
+            1. Check email, password
+            2. Check status
+            3. Return user info
+         */
+        try {
+            authenticationManager.authenticate
+                    (new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
+            User user = authenticationRepository.findUserByEmail(loginRequest.getEmail())
+                    .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
+            if(user.getStatus().equals(UserStatusEnum.INACTIVE)){
+                throw new AuthenticationException("Account is INACTIVE");
+            }
+            String token = tokenService.generateAccessToken(user);
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setEmail(user.getEmail());
+            loginResponse.setAccessToken(token);
+            loginResponse.setRole(user.getRole());
+            return loginResponse;
+        }
+        catch (AuthenticationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuthenticationException("Invalid username or password");
+        }
+
     }
 }
