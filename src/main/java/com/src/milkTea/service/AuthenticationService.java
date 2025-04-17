@@ -74,7 +74,14 @@ public class AuthenticationService implements UserDetailsService {
         User user = new User();
         modelMapper.map(registerRequest, user);
         user.setPassword(passwordEncoder.encode("Password123"));
-        user.setRole(UserRoleEnum.STAFF);
+        // Set Role
+        if(registerRequest.getRole().equalsIgnoreCase("Manager")) {
+            user.setRole(UserRoleEnum.MANAGER);
+        } else if (registerRequest.getRole().equalsIgnoreCase("Staff")) {
+            user.setRole(UserRoleEnum.STAFF);
+        } else {
+            throw new AuthenticationException("Invalid role");
+        }
         user.setStatus(UserStatusEnum.ACTIVE);
         authenticationRepository.save(user);
         return modelMapper.map(user, UserDTO.class);

@@ -20,4 +20,8 @@ public class RegisterRequest {
     @Schema(description = "Phone number", example = "0841234567")
     @Pattern(regexp = "(84|0[35789])[0-9]{8}", message = "Invalid phone number")
     private String phoneNumber;
+
+    @Schema(description = "Staff", example = "Male")
+    @Pattern(regexp = "^(Staff|Manager)$", message = "Manager or Staff")
+    private String role;
 }
