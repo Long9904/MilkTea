@@ -11,8 +11,8 @@ public class CORSConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("https://swp-3-w.vercel.app","https://beautiful-unity-production.up.railway.app","https://swp-3-w.vercel.app/")
-                // config https for Frontend and railway
+                .allowedOrigins("https://swp-3-w.vercel.app","https://beautiful-unity-production.up.railway.app","https://swp-3-w.vercel.app/",
+                        "http://localhost:5173") // config https for Frontend and railway and localhost Frontend
                 .allowedHeaders("*")
                 .exposedHeaders("Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
