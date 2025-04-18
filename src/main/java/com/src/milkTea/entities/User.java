@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -40,6 +41,22 @@ public class User implements UserDetails {
     private String phoneNumber;
 
     private String address;
+
+    private LocalDateTime createAt;
+
+    private LocalDateTime updateAt;
+
+    private LocalDateTime deleteAt;
+
+    @PrePersist
+    public void prePersist() {
+        createAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updateAt = LocalDateTime.now();
+    }
 
     @Enumerated(EnumType.STRING)
     private UserRoleEnum role;
