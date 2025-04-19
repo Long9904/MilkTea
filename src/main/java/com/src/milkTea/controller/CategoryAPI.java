@@ -1,9 +1,13 @@
 package com.src.milkTea.controller;
 
 import com.src.milkTea.dto.CategoryDTO;
+import com.src.milkTea.dto.response.CategoryResponse;
+import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.Category;
 import com.src.milkTea.service.CategoryService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +39,8 @@ public class CategoryAPI {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllCategories(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(categoryService.getAllCategories(page, size));
+    public ResponseEntity<?> getAllCategories(@ParameterObject Pageable pageable) {
+        PagingResponse<CategoryResponse> response = categoryService.getAllCategories(pageable);
+        return ResponseEntity.ok(response);
     }
 }

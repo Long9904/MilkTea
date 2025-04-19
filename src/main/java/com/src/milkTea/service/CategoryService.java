@@ -7,15 +7,12 @@ import com.src.milkTea.entities.Category;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
-import com.src.milkTea.exception.PageException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.CategoryRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -72,31 +69,22 @@ public class CategoryService {
         categoryRepository.save(existingCategory);
     }
 
-    public PagingResponse<CategoryResponse> getAllCategories(int page, int size) {
+    public PagingResponse<CategoryResponse> getAllCategories(Pageable pageable) {
 
-        if (page < 0 || size <= 0) {
-            throw new PageException("Invalid page or size: page must >= 0 and size > 0");
-        }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
-        Page<Category> categoryPage = categoryRepository.findAll(pageable);
-
-        if (page >= categoryPage.getTotalPages() && categoryPage.getTotalPages() > 0) {
-            throw new PageException("Page number exceeds total pages: " + page + " >= " + categoryPage.getTotalPages());
-        }
-
-       List<CategoryResponse> categories = categoryPage.getContent().stream()
+        Page<Category> categories = categoryRepository.findAll(pageable);
+        List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
                 .toList();
 
         PagingResponse<CategoryResponse> response = new PagingResponse<>();
-        response.setData(categories);
-        response.setPage(page);
-        response.setSize(size);
-        response.setTotalPages(categoryPage.getTotalPages());
-        response.setTotalElements(categoryPage.getTotalElements());
-        response.setLast(categoryPage.isLast());
+        response.setData(categoryResponses);
+        response.setPage(categories.getNumber());
+        response.setSize(categories.getSize());
+        response.setTotalElements(categories.getTotalElements());
+        response.setTotalPages(categories.getTotalPages());
+        response.setLast(categories.isLast());
         return response;
+
     }
 
 }
