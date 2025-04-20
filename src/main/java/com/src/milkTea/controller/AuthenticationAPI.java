@@ -29,7 +29,7 @@ public class AuthenticationAPI {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody  LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> login(@RequestBody  LoginRequest loginRequest) {
         LoginResponse loginResponse = authenticationService.login(loginRequest);
         return ResponseEntity.ok(loginResponse);
     }
