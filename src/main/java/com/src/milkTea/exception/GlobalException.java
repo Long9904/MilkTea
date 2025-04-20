@@ -1,5 +1,6 @@
 package com.src.milkTea.exception;
 
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -76,6 +77,7 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
     }
 
+    // Xử lí lỗi không tìm thấy
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFoundException(NotFoundException ex) {
         Map<String, Object> msg = new HashMap<>();
@@ -84,8 +86,18 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
     }
 
+    // Status exception custom
     @ExceptionHandler(StatusException.class)
     public ResponseEntity<Map<String, Object>> handleStatusException(StatusException ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+    }
+
+    // Xử lí lỗi không tìm thấy thuộc tính của entity
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<Map<String, Object>> handlePropertyReferenceException(PropertyReferenceException ex) {
         Map<String, Object> msg = new HashMap<>();
         msg.put("message", "error");
         msg.put("details", ex.getMessage());
