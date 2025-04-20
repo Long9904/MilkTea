@@ -2,6 +2,7 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.CategoryResponse;
+import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
@@ -11,8 +12,11 @@ import com.src.milkTea.repository.CategoryRepository;
 import com.src.milkTea.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,5 +72,46 @@ public class ProductService {
         // Map the category to CategoryResponse
         productResponse.setCategory(modelMapper.map(savedProduct.getCategory(), CategoryResponse.class));
         return productResponse;
+    }
+
+    public void  deleteProduct(Long productId) {
+        // Check if the product is already deleted
+        if (productRepository.findByIdAndStatus(productId, ProductStatusEnum.DELETED).isPresent()) {
+            throw new NotFoundException("Product already deleted");
+        }
+
+        // Delete the product
+        // Set the status to DELETED
+        Product existingProduct = productRepository.findByIdAndStatus(productId, ProductStatusEnum.ACTIVE)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+
+        existingProduct.setStatus(ProductStatusEnum.DELETED);
+        existingProduct.setDeleteAt(LocalDateTime.now());
+        productRepository.save(existingProduct);
+    }
+
+    public PagingResponse<ProductResponse> getAllProducts(Pageable pageable) {
+
+        Page<Product> products = productRepository.findAll(pageable);
+        // Check if there are any products and map them to ProductResponse
+        List<ProductResponse> productResponses = products.getContent().stream()
+                .map(product -> modelMapper.map(product, ProductResponse.class))
+                .toList();
+        // Map the category to CategoryResponse
+        for (ProductResponse productResponse : productResponses) {
+            CategoryResponse categoryResponse = modelMapper.map(productResponse.getCategory(), CategoryResponse.class);
+            productResponse.setCategory(categoryResponse);
+        }
+
+        // Create a PagingResponse object
+        PagingResponse<ProductResponse> pagingResponse = new PagingResponse<>();
+        pagingResponse.setData(productResponses);
+        pagingResponse.setPage(products.getNumber());
+        pagingResponse.setSize(products.getSize());
+        pagingResponse.setTotalPages(products.getTotalPages());
+        pagingResponse.setTotalElements(products.getTotalElements());
+        pagingResponse.setLast(products.isLast());
+
+        return pagingResponse;
     }
 }

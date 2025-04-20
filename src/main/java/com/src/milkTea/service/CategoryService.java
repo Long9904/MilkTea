@@ -55,7 +55,7 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long id) {
-        // Check if the category exists
+        // Check if the category is already deleted
         if(categoryRepository.findByIdAndStatus(id, ProductStatusEnum.DELETED).isPresent()) {
             throw new StatusException("Category already deleted");
         }
@@ -71,6 +71,7 @@ public class CategoryService {
     }
 
     public PagingResponse<CategoryResponse> getAllCategories(Pageable pageable) {
+
         Page<Category> categories = categoryRepository.findAll(pageable);
         // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
@@ -86,7 +87,6 @@ public class CategoryService {
         response.setTotalPages(categories.getTotalPages());
         response.setLast(categories.isLast());
         return response;
-
     }
 
 }
