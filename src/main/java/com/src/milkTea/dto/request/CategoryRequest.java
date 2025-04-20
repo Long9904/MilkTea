@@ -1,4 +1,4 @@
-package com.src.milkTea.dto;
+package com.src.milkTea.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CategoryDTO {
+public class CategoryRequest {
 
 
     @NotNull(message = "Name cannot be null")

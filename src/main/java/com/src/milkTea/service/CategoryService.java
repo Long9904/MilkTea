@@ -1,6 +1,6 @@
 package com.src.milkTea.service;
 
-import com.src.milkTea.dto.CategoryDTO;
+import com.src.milkTea.dto.request.CategoryRequest;
 import com.src.milkTea.dto.response.CategoryResponse;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.Category;
@@ -31,26 +31,26 @@ public class CategoryService {
         this.modelMapper = modelMapper;
     }
 
-    public Category createCategory(CategoryDTO categoryDTO) {
+    public Category createCategory(CategoryRequest categoryRequest) {
         // Check if the category name already exists
-        if (categoryRepository.existsByName(categoryDTO.getName())) {
+        if (categoryRepository.existsByName(categoryRequest.getName())) {
             throw new DuplicateException(List.of("Category name already exists"));
         }
-        Category category = modelMapper.map(categoryDTO, Category.class);
+        Category category = modelMapper.map(categoryRequest, Category.class);
         // Set default status to ACTIVE
         category.setStatus(ProductStatusEnum.ACTIVE);
         return  categoryRepository.save(category);
     }
 
-    public Category updateCategory(Long id, CategoryDTO categoryDTO) {
+    public Category updateCategory(Long id, CategoryRequest categoryRequest) {
         // Check if the category name already exists
-        if (categoryRepository.existsByNameAndIdNot(categoryDTO.getName(), id)) {
+        if (categoryRepository.existsByNameAndIdNot(categoryRequest.getName(), id)) {
             throw new DuplicateException(List.of("Category name already exists"));
         }
         // Find the category by ID
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
-        modelMapper.map(categoryDTO, existingCategory);
+        modelMapper.map(categoryRequest, existingCategory);
         return categoryRepository.save(existingCategory);
     }
 
