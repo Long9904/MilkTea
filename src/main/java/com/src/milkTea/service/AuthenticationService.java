@@ -51,10 +51,10 @@ public class AuthenticationService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
-    // Dùng để đăng kí tài khoản bởi admin --> tự generate info sau đó staff sẽ tự động update
+    // Dùng để đăng kí tài khoản bởi admin
     public UserDTO register(RegisterRequest registerRequest) {
         /*
-            1. Take email, phone, full from list staff
+            1. Take user from list staff
             2. Check duplicate email
             3. Check duplicate phone
             4. Generate password
@@ -71,6 +71,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new DuplicateException(duplicateEntries);
         }
 
+        // Map RegisterRequest to User entity
         User user = new User();
         modelMapper.map(registerRequest, user);
         user.setPassword(passwordEncoder.encode("Password123"));
@@ -82,7 +83,11 @@ public class AuthenticationService implements UserDetailsService {
         } else {
             throw new AuthenticationException("Invalid role");
         }
+
+        // Set Status
         user.setStatus(UserStatusEnum.ACTIVE);
+
+        // Save to DB
         authenticationRepository.save(user);
         return modelMapper.map(user, UserDTO.class);
     }
@@ -94,14 +99,18 @@ public class AuthenticationService implements UserDetailsService {
             3. Return user info
          */
         try {
+            // Authenticate user credentials by using AuthenticationManager
             authenticationManager.authenticate
                     (new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
             User user = authenticationRepository.findUserByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
+
             if(user.getStatus().equals(UserStatusEnum.INACTIVE)){
                 throw new AuthenticationException("Account is INACTIVE");
-            }
+            }// User is not active
+
+            // Generate JWT token
             String token = tokenService.generateAccessToken(user);
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setEmail(user.getEmail());

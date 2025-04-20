@@ -60,6 +60,7 @@ public class CategoryService {
             throw new StatusException("Category already deleted");
         }
 
+        // Find the category by ID
         Category existingCategory = categoryRepository.findByIdAndStatus(id, ProductStatusEnum.ACTIVE)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
 
@@ -70,12 +71,13 @@ public class CategoryService {
     }
 
     public PagingResponse<CategoryResponse> getAllCategories(Pageable pageable) {
-
         Page<Category> categories = categoryRepository.findAll(pageable);
+        // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
                 .toList();
 
+        // Create a response object
         PagingResponse<CategoryResponse> response = new PagingResponse<>();
         response.setData(categoryResponses);
         response.setPage(categories.getNumber());
