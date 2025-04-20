@@ -5,6 +5,7 @@ import com.src.milkTea.dto.request.LoginRequest;
 import com.src.milkTea.dto.request.RegisterRequest;
 import com.src.milkTea.dto.response.LoginResponse;
 import com.src.milkTea.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/authentication")
-//@SecurityRequirement(name = "api")
+@SecurityRequirement(name = "api")
 public class AuthenticationAPI {
 
     @Autowired

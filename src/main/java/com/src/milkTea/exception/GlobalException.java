@@ -104,4 +104,12 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
     }
 
+    // Xử lí lỗi phân quyền
+    @ExceptionHandler(AuthorizeException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthorizeException(AuthorizeException ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(msg);
+    }
 }
