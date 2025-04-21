@@ -1,6 +1,7 @@
 package com.src.milkTea.specification;
 
 import com.src.milkTea.entities.Product;
+import com.src.milkTea.enums.ProductStatusEnum;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,5 +42,14 @@ public class ProductSpecification {
             return cb.like(cb.lower(categoryJoin.get("name")), "%" + categoryName.toLowerCase() + "%");
         };
     }
+
+    public static Specification<Product> hasStatus(ProductStatusEnum status) {
+        return (root, query, cb) -> {
+            // mặc định sử dụng ACTIVE
+            ProductStatusEnum finalStatus = (status == null) ? ProductStatusEnum.ACTIVE : status;
+            return cb.equal(root.get("status"), finalStatus);
+        };
+    }
+
 
 }
