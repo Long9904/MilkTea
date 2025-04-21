@@ -1,7 +1,6 @@
 package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.ProductRequest;
-import com.src.milkTea.dto.response.CategoryResponse;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Category;
@@ -81,7 +80,7 @@ public class ProductService {
     }
 
     public PagingResponse<ProductResponse> getAllProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findAll(pageable);
+        Page<Product> products = productRepository.findAllWithCategory(pageable);
 
         // Convert the Page<Product> to List<ProductResponse>
         List<ProductResponse> productResponses = products.getContent().stream()
@@ -110,6 +109,42 @@ public class ProductService {
             response.setCategoryName(product.getCategory().getName());
         }
         return response;
+    }
+
+
+    public ProductResponse updateProduct(Long productId, ProductRequest productRequest) {
+        // Check if the product exists
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+
+        // Check duplicate name and product code
+        List<String> duplicates = new ArrayList<>();
+        if (productRepository.existsByNameAndIdNot(productRequest.getName(), productId)) {
+            duplicates.add("Product name already exists");
+        }
+        if (productRepository.existsByProductCodeAndIdNot(productRequest.getProductCode(), productId)) {
+            duplicates.add("Product code already exists");
+        }
+        if (!duplicates.isEmpty()) {
+            throw new DuplicateException(duplicates);
+        }
+
+        // Check if category exists or not
+        Category category = categoryRepository.findById(productRequest.getCategoryId())
+                .orElseThrow(() -> new NotFoundException("Category not found"));
+
+        // Update the product
+        modelMapper.map(productRequest, existingProduct);
+        existingProduct.setCategory(category);
+        existingProduct.setUpdateAt(LocalDateTime.now());
+        Product updatedProduct = productRepository.save(existingProduct);
+
+        // Map to response
+        ProductResponse productResponse = modelMapper.map(updatedProduct, ProductResponse.class);
+        productResponse.setCategoryId(category.getId());
+        productResponse.setCategoryName(category.getName());
+
+        return productResponse;
     }
 
 }

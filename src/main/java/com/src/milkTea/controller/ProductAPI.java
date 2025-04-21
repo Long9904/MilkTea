@@ -38,4 +38,10 @@ public class ProductAPI {
         PagingResponse<ProductResponse> response = productService.getAllProducts(pageable);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest) {
+        ProductResponse productResponse = productService.updateProduct(id, productRequest);
+        return ResponseEntity.ok(productResponse);
+    }
 }

@@ -39,13 +39,15 @@ public class CategoryService {
     }
 
     public Category updateCategory(Long id, CategoryRequest categoryRequest) {
+        // Find the category by ID
+        Category existingCategory = categoryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category not found"));
+
         // Check if the category name already exists
         if (categoryRepository.existsByNameAndIdNot(categoryRequest.getName(), id)) {
             throw new DuplicateException(List.of("Category name already exists"));
         }
-        // Find the category by ID
-        Category existingCategory = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category not found"));
+
         modelMapper.map(categoryRequest, existingCategory);
         return categoryRepository.save(existingCategory);
     }
