@@ -15,6 +15,7 @@ public class RegisterRequest {
 
     @Schema(description = "Full name of the user", example = "Long Cha")
     @Size(min = 1, max = 30, message = "Full name must be between 1 and 30 characters")
+    @NotBlank(message = "Full name is required")
     private String fullName;
 
 
@@ -30,10 +31,12 @@ public class RegisterRequest {
 
     @Schema(description = "Address", example = "HCM City")
     @Size(min = 0 ,max = 255, message = "Address cannot exceed 255 characters")
+    @NotBlank(message = "Address is required")
     private String address;
 
     @Schema(description = "Phone number", example = "0841234567")
     @Pattern(regexp = "(84|0[35789])[0-9]{8}", message = "Invalid phone number")
+    @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
     @Schema(description = "Staff|Manager", example = "Staff")

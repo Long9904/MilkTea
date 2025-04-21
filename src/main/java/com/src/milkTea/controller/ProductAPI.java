@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/product")
+@RequestMapping("api/products")
 @SecurityRequirement(name = "api")
 public class ProductAPI {
 
@@ -43,5 +43,16 @@ public class ProductAPI {
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest productRequest) {
         ProductResponse productResponse = productService.updateProduct(id, productRequest);
         return ResponseEntity.ok(productResponse);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterProducts(@ParameterObject Pageable pageable,
+                                            @RequestParam(required = false) String name,
+                                            @RequestParam(required = false) Double minPrice,
+                                            @RequestParam(required = false) Double maxPrice,
+                                            @RequestParam(required = false) String categoryName
+    ) {
+        PagingResponse<ProductResponse> response = productService.filterProducts(name, minPrice, maxPrice, categoryName, pageable);
+        return ResponseEntity.ok(response);
     }
 }

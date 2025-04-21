@@ -3,12 +3,15 @@ package com.src.milkTea.service;
 import com.src.milkTea.dto.request.CategoryRequest;
 import com.src.milkTea.dto.response.CategoryResponse;
 import com.src.milkTea.dto.response.PagingResponse;
+import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Category;
+import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.CategoryRepository;
+import com.src.milkTea.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,6 +30,9 @@ public class CategoryService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private ProductRepository productRepository;
+
     public Category createCategory(CategoryRequest categoryRequest) {
         // Check if the category name already exists
         if (categoryRepository.existsByName(categoryRequest.getName())) {
@@ -35,7 +41,7 @@ public class CategoryService {
         Category category = modelMapper.map(categoryRequest, Category.class);
         // Set default status to ACTIVE
         category.setStatus(ProductStatusEnum.ACTIVE);
-        return  categoryRepository.save(category);
+        return categoryRepository.save(category);
     }
 
     public Category updateCategory(Long id, CategoryRequest categoryRequest) {
@@ -54,7 +60,7 @@ public class CategoryService {
 
     public void deleteCategory(Long id) {
         // Check if the category is already deleted
-        if(categoryRepository.findByIdAndStatus(id, ProductStatusEnum.DELETED).isPresent()) {
+        if (categoryRepository.findByIdAndStatus(id, ProductStatusEnum.DELETED).isPresent()) {
             throw new StatusException("Category already deleted");
         }
 
@@ -87,4 +93,49 @@ public class CategoryService {
         return response;
     }
 
+    public PagingResponse<CategoryResponse> getCategoryByName(String name, Pageable pageable) {
+        Page<Category> categories = categoryRepository.findByNameContainingIgnoreCase(name, pageable);
+        // Check if there are any categories
+        List<CategoryResponse> categoryResponses = categories.getContent().stream()
+                .map(category -> modelMapper.map(category, CategoryResponse.class))
+                .toList();
+
+        // Create a response object
+        PagingResponse<CategoryResponse> response = new PagingResponse<>();
+        response.setData(categoryResponses);
+        response.setPage(categories.getNumber());
+        response.setSize(categories.getSize());
+        response.setTotalElements(categories.getTotalElements());
+        response.setTotalPages(categories.getTotalPages());
+        response.setLast(categories.isLast());
+        return response;
+    }
+
+
+    public PagingResponse<ProductResponse> getProductsByCategoryIdAndStatus(Long id, ProductStatusEnum status, Pageable pageable) {
+        // Find the category by ID
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Category not found"));
+
+        // Check if the category is deleted
+        if (category.getStatus() == ProductStatusEnum.DELETED) {
+            throw new StatusException("Category is deleted");
+        }
+
+        Page<Product> products = productRepository.findByCategoryIdAndStatus(id, status, pageable);
+        // Check if there are any products
+        List<ProductResponse> productResponses = products.getContent().stream()
+                .map(product -> modelMapper.map(product, ProductResponse.class))
+                .toList();
+
+        // Create a response object
+        PagingResponse<ProductResponse> response = new PagingResponse<>();
+        response.setData(productResponses);
+        response.setPage(products.getNumber());
+        response.setSize(products.getSize());
+        response.setTotalElements(products.getTotalElements());
+        response.setTotalPages(products.getTotalPages());
+        response.setLast(products.isLast());
+        return response;
+    }
 }
