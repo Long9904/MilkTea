@@ -29,7 +29,7 @@ public class ProductAPI {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
+        productService.softDeleteProduct(id);
         return ResponseEntity.ok("Delete success");
     }
 

@@ -4,6 +4,7 @@ import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.CategoryResponse;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
+import com.src.milkTea.entities.Category;
 import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
@@ -30,78 +31,62 @@ public class ProductService {
     private CategoryRepository categoryRepository;
 
     @Autowired
-    private final ModelMapper modelMapper;
-
-    public ProductService(ModelMapper modelMapper) {
-        this.modelMapper = modelMapper;
-    }
+    private ModelMapper modelMapper;
 
     public ProductResponse createProduct(ProductRequest productRequest) {
-       // Check duplicate name and product code
-
+        // Check duplicate name and product code
         List<String> duplicates = new ArrayList<>();
-
         if (productRepository.existsByName(productRequest.getName())) {
             duplicates.add("Product name already exists");
         }
-
         if (productRepository.existsByProductCode(productRequest.getProductCode())) {
             duplicates.add("Product code already exists");
         }
-
         if (!duplicates.isEmpty()) {
             throw new DuplicateException(duplicates);
         }
         // Check if category exists or not
-        if (!categoryRepository.existsById(productRequest.getCategoryId())) {
-            throw new NotFoundException("Category not found");
-        }
+        Category category = categoryRepository.findById(productRequest.getCategoryId())
+                .orElseThrow(() -> new NotFoundException("Category not found"));
 
-        // Convert ProductRequest to Product entity
+        // Convert ProductRequest to Product entity and map the category
         Product product = modelMapper.map(productRequest, Product.class);
-        product.setCategory(categoryRepository.findById(productRequest.getCategoryId()).orElse(null));
-
-        // Set default status to ACTIVE
+        product.setCategory(category);
         product.setStatus(ProductStatusEnum.ACTIVE);
 
-        // Save the product to the database
+        // Save the product
         Product savedProduct = productRepository.save(product);
-        // Convert the saved product to ProductResponse
-        ProductResponse productResponse = modelMapper.map(savedProduct, ProductResponse.class);
 
-        // Map the category to CategoryResponse
-        productResponse.setCategory(modelMapper.map(savedProduct.getCategory(), CategoryResponse.class));
+        // Map to response
+        ProductResponse productResponse = modelMapper.map(savedProduct, ProductResponse.class);
+        productResponse.setCategoryId(category.getId());
+        productResponse.setCategoryName(category.getName());
+
         return productResponse;
     }
 
-    public void  deleteProduct(Long productId) {
+
+    public void softDeleteProduct(Long productId) {
         // Check if the product is already deleted
         if (productRepository.findByIdAndStatus(productId, ProductStatusEnum.DELETED).isPresent()) {
             throw new NotFoundException("Product already deleted");
         }
-
         // Delete the product
         // Set the status to DELETED
         Product existingProduct = productRepository.findByIdAndStatus(productId, ProductStatusEnum.ACTIVE)
                 .orElseThrow(() -> new NotFoundException("Product not found"));
-
         existingProduct.setStatus(ProductStatusEnum.DELETED);
         existingProduct.setDeleteAt(LocalDateTime.now());
         productRepository.save(existingProduct);
     }
 
     public PagingResponse<ProductResponse> getAllProducts(Pageable pageable) {
-
         Page<Product> products = productRepository.findAll(pageable);
-        // Check if there are any products and map them to ProductResponse
+
+        // Convert the Page<Product> to List<ProductResponse>
         List<ProductResponse> productResponses = products.getContent().stream()
-                .map(product -> modelMapper.map(product, ProductResponse.class))
+                .map(this::convertToProductResponse)
                 .toList();
-        // Map the category to CategoryResponse
-        for (ProductResponse productResponse : productResponses) {
-            CategoryResponse categoryResponse = modelMapper.map(productResponse.getCategory(), CategoryResponse.class);
-            productResponse.setCategory(categoryResponse);
-        }
 
         // Create a PagingResponse object
         PagingResponse<ProductResponse> pagingResponse = new PagingResponse<>();
@@ -111,7 +96,20 @@ public class ProductService {
         pagingResponse.setTotalPages(products.getTotalPages());
         pagingResponse.setTotalElements(products.getTotalElements());
         pagingResponse.setLast(products.isLast());
-
+        // Return the PagingResponse
         return pagingResponse;
     }
+
+
+    private ProductResponse convertToProductResponse(Product product) {
+        // Convert Product to ProductResponse
+        ProductResponse response = modelMapper.map(product, ProductResponse.class);
+        // Map id and name of the category to ProductResponse
+        if (product.getCategory() != null) {
+            response.setCategoryId(product.getCategory().getId());
+            response.setCategoryName(product.getCategory().getName());
+        }
+        return response;
+    }
+
 }

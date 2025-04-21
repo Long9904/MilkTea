@@ -41,5 +41,7 @@ public class ProductResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime deleteAt;
 
-    private CategoryResponse category;
+    private Long categoryId;
+
+    private String categoryName;
 }
