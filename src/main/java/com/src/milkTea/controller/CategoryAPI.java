@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/categories")
+@RequestMapping("api/category")
 @SecurityRequirement(name = "api")
 public class CategoryAPI {
 
