@@ -33,7 +33,7 @@ public class AuthenticationService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private final ModelMapper modelMapper;
+    private ModelMapper modelMapper;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -41,9 +41,7 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     private TokenService tokenService;
 
-    public AuthenticationService(ModelMapper modelMapper) {
-        this.modelMapper = modelMapper;
-    }
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

@@ -25,11 +25,7 @@ public class CategoryService {
     private CategoryRepository categoryRepository;
 
     @Autowired
-    private final ModelMapper modelMapper;
-
-    public CategoryService(ModelMapper modelMapper) {
-        this.modelMapper = modelMapper;
-    }
+    private ModelMapper modelMapper;
 
     public Category createCategory(CategoryRequest categoryRequest) {
         // Check if the category name already exists
