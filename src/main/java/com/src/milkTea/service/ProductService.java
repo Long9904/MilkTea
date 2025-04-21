@@ -8,6 +8,7 @@ import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
+import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.CategoryRepository;
 import com.src.milkTea.repository.ProductRepository;
 import com.src.milkTea.specification.ProductSpecification;
@@ -69,11 +70,12 @@ public class ProductService {
     public void softDeleteProduct(Long productId) {
         // Check if the product is already deleted
         if (productRepository.findByIdAndStatus(productId, ProductStatusEnum.DELETED).isPresent()) {
-            throw new NotFoundException("Product already deleted");
+            throw new StatusException("Product already deleted");
         }
         // Delete the product
         // Set the status to DELETED
-        Product existingProduct = productRepository.findByIdAndStatus(productId, ProductStatusEnum.ACTIVE).orElseThrow(() -> new NotFoundException("Product not found"));
+        Product existingProduct = productRepository.findByIdAndStatus(productId, ProductStatusEnum.ACTIVE).orElseThrow(()
+                -> new NotFoundException("Product not found"));
         existingProduct.setStatus(ProductStatusEnum.DELETED);
         existingProduct.setDeleteAt(LocalDateTime.now());
         productRepository.save(existingProduct);
@@ -81,7 +83,8 @@ public class ProductService {
 
     public ProductResponse updateProduct(Long productId, ProductRequest productRequest) {
         // Check if the product exists
-        Product existingProduct = productRepository.findById(productId).orElseThrow(() -> new NotFoundException("Product not found"));
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
 
         // Check duplicate name and product code
         List<String> duplicates = new ArrayList<>();
@@ -125,8 +128,12 @@ public class ProductService {
     }
 
     public PagingResponse<ProductResponse> getAllProducts(Pageable pageable) {
+        // Set default status to ACTIVE
+        Specification<Product> spec = Specification.
+                where(ProductSpecification.hasStatus(ProductStatusEnum.ACTIVE));
 
-        Page<Product> products = productRepository.findAll(pageable);
+        // Find all products with pagination
+        Page<Product> products = productRepository.findAll(spec, pageable);
 
         // Convert the Page<Product> to List<ProductResponse>
         List<ProductResponse> productResponses = products.getContent()
@@ -146,14 +153,19 @@ public class ProductService {
     }
 
 
-    public PagingResponse<ProductResponse> filterProducts(String name, Double minPrice, Double maxPrice, String categoryName, Pageable pageable) {
-
+    public PagingResponse<ProductResponse> filterProducts(String name,
+                                                          Double minPrice,
+                                                          Double maxPrice,
+                                                          String categoryName,
+                                                          Pageable pageable) {
+        // Create a Specification to filter products
         Specification<Product> spec = Specification.
                 where(ProductSpecification.nameContains(name))
                 .and(ProductSpecification.priceBetween(minPrice, maxPrice))
-                .and(ProductSpecification.categoryNameContains(categoryName));
+                .and(ProductSpecification.categoryNameContains(categoryName))
+                .and(ProductSpecification.hasStatus(ProductStatusEnum.ACTIVE));
 
-
+        // Find all products with pagination and filtering
         Page<Product> products = productRepository.findAll(spec, pageable);
         // Convert the Page<Product> to List<ProductResponse>
         List<ProductResponse> productResponses = products.getContent()

@@ -12,10 +12,12 @@ import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.CategoryRepository;
 import com.src.milkTea.repository.ProductRepository;
+import com.src.milkTea.specification.CategorySpecification;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -76,7 +78,11 @@ public class CategoryService {
 
     public PagingResponse<CategoryResponse> getAllCategories(Pageable pageable) {
 
-        Page<Category> categories = categoryRepository.findAll(pageable);
+        Specification<Category> spec = Specification
+                .where(CategorySpecification.hasStatus(ProductStatusEnum.ACTIVE));
+
+        // Find all categories
+        Page<Category> categories = categoryRepository.findAll(spec, pageable);
         // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
@@ -94,7 +100,8 @@ public class CategoryService {
     }
 
     public PagingResponse<CategoryResponse> getCategoryByName(String name, Pageable pageable) {
-        Page<Category> categories = categoryRepository.findByNameContainingIgnoreCase(name, pageable);
+        //Find categories by name
+        Page<Category> categories = categoryRepository.findByNameContainingIgnoreCaseAndStatus(name, pageable, ProductStatusEnum.ACTIVE);
         // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
@@ -122,11 +129,19 @@ public class CategoryService {
             throw new StatusException("Category is deleted");
         }
 
+        // Find products by category ID and status
         Page<Product> products = productRepository.findByCategoryIdAndStatus(id, status, pageable);
         // Check if there are any products
         List<ProductResponse> productResponses = products.getContent().stream()
                 .map(product -> modelMapper.map(product, ProductResponse.class))
                 .toList();
+
+        // Map CategoryId and CategoryName to ProductResponse
+        productResponses.forEach(productResponse -> {
+            CategoryResponse categoryResponse = modelMapper.map(category, CategoryResponse.class);
+            productResponse.setCategoryId(categoryResponse.getId());
+            productResponse.setCategoryName(categoryResponse.getName());
+        });
 
         // Create a response object
         PagingResponse<ProductResponse> response = new PagingResponse<>();
