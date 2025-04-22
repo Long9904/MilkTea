@@ -2,14 +2,19 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.UserDTO;
 import com.src.milkTea.dto.request.UserRequest;
+import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.User;
 import com.src.milkTea.enums.UserStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.UserRepository;
+import com.src.milkTea.specification.UserSpecification;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -63,5 +68,37 @@ public class UserService {
         User updatedUser = userRepository.save(updatedUserEntity);
 
         return modelMapper.map(updatedUser, UserDTO.class);
+    }
+
+    public PagingResponse<UserDTO> filterUsers(String name,
+                                               String gender,
+                                               String role,
+                                               Pageable pageable) {
+        // Create a specification to filter users
+        Specification<User> spec = Specification
+                .where(UserSpecification.nameContains(name))
+                .and(UserSpecification.hasGender(gender))
+                .and(UserSpecification.hasRole(role));
+
+        // Find all users with the given specifications with pagination
+
+        Page<User> users = userRepository.findAll(spec, pageable);
+
+        // Convert the list of users to a list of UserDTO
+
+        List<UserDTO> userDTOs = users.getContent().stream()
+                .map(user -> modelMapper.map(user, UserDTO.class))
+                .toList();
+
+        // Create a PagingResponse object to return the paginated result
+        PagingResponse<UserDTO> pagingResponse = new PagingResponse<>();
+        pagingResponse.setData(userDTOs);
+        pagingResponse.setPage(users.getNumber());
+        pagingResponse.setSize(users.getSize());
+        pagingResponse.setTotalPages(users.getTotalPages());
+        pagingResponse.setTotalElements(users.getTotalElements());
+        pagingResponse.setLast(users.isLast());
+        // Return the PagingResponse
+        return pagingResponse;
     }
 }

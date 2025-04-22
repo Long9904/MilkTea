@@ -120,12 +120,6 @@
 		</dependency>
 
 
-		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-			<version>3.4.2</version>
-		</dependency>
 
 	</dependencies>
 

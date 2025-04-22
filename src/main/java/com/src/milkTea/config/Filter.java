@@ -49,6 +49,7 @@ public class Filter extends OncePerRequestFilter {
             new PublicAPI("/swagger-resources/**", null),
             new PublicAPI("/api/authentication/login", null),
             new PublicAPI("/api/authentication/register", null),
+            //--Delete this line--//
             new PublicAPI("/api/**", null) // need delete this line
             );
 
@@ -65,6 +66,7 @@ public class Filter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
@@ -92,9 +94,12 @@ public class Filter extends OncePerRequestFilter {
             resolver.resolveException(request, response, null, new AuthorizeException("Authentication error!"));
             return;
         }
+        // Set authentication if user is not null and token is valid
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(user, token, user.getAuthorities());
+        // Set details for authentication
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        // Set authentication in SecurityContextHolder
         SecurityContextHolder.getContext().setAuthentication(authToken);
         filterChain.doFilter(request, response);
     }
