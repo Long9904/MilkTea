@@ -2,9 +2,7 @@ package com.src.milkTea.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.src.milkTea.enums.ProductStatusEnum;
-import com.src.milkTea.enums.ProductTypeEnum;
-import com.src.milkTea.enums.ProductUsageEnum;
+import com.src.milkTea.enums.ProducSizeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,32 +16,17 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class OrderMaster {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String name;
+    private double mainPrice;
 
-    private Double basePrice;
+    private int quantity;
 
-    @Column(unique = true, nullable = false)
-    private String productCode;
-
-    private String imageUrl;
-
-    private String description;
-
-    @Enumerated(EnumType.STRING)
-    private ProductTypeEnum productType;
-
-    @Enumerated(EnumType.STRING)
-    private ProductUsageEnum productUsage;
-
-    @Enumerated(EnumType.STRING)
-    private ProductStatusEnum status;
+    private ProducSizeEnum size;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createAt;
@@ -54,18 +37,21 @@ public class Product {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime deleteAt;
 
-    // Join with Category
+    // Join with Orders
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", referencedColumnName = "id")
-    private Category category;
-
-    // Join with OrderMaster
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "orders_id", referencedColumnName = "id")
     @JsonIgnore
-    private List<OrderMaster> orderMasters = new ArrayList<>();
+    private Orders orders;
+
+
+    // Join with Product
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", referencedColumnName = "id")
+    @JsonIgnore
+    private Product product;
 
     // Join with OrderDetail
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "orderMaster", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<OrderDetail> orderDetails = new ArrayList<>();
 

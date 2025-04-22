@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,9 @@ public class UserService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public void softDeleteUser(Long id) {
         // Check if user is already deleted
@@ -61,7 +65,11 @@ public class UserService {
         }
 
         User updatedUserEntity = modelMapper.map(userRequest, User.class);
+
         // Set the existing ID to ensure we're updating the existing user
+        // Take password from user and encode it
+        String password = passwordEncoder.encode(user.getPassword());
+        updatedUserEntity.setPassword(password);
         updatedUserEntity.setId(id);
         updatedUserEntity.setUpdateAt(LocalDateTime.now());
         // Save the updated user
