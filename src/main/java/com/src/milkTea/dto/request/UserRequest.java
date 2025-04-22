@@ -21,10 +21,10 @@ public class UserRequest {
     @Email(message = "Email should be valid")
     private String email;
 
-    @Schema(description = "Password", example = "Password123")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$",
-            message = "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit")
-    private String password;
+//    @Schema(description = "Password", example = "Password123")
+//    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$",
+//            message = "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit")
+//    private String password;
 
     @Schema(description = "Date of birth (yyyy-mm-dd)", example = "2023-01-30")
     @NotNull(message = "Date of birth is required")
