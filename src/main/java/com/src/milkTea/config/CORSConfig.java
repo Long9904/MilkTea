@@ -6,6 +6,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+// This class configures CORS (Cross-Origin Resource Sharing) settings for the application.
 public class CORSConfig implements WebMvcConfigurer {
 
     @Override
@@ -17,7 +18,7 @@ public class CORSConfig implements WebMvcConfigurer {
                 .exposedHeaders("Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true)
-                .maxAge(36000);
+                .maxAge(360000); // 1 hour
     }
 
     @Override

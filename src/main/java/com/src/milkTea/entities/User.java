@@ -48,6 +48,12 @@ public class User implements UserDetails {
 
     private LocalDateTime deleteAt;
 
+    @Enumerated(EnumType.STRING)
+    private UserRoleEnum role;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatusEnum status = UserStatusEnum.ACTIVE;
+
     @PrePersist
     public void prePersist() {
         createAt = LocalDateTime.now();
@@ -57,12 +63,6 @@ public class User implements UserDetails {
     public void preUpdate() {
         updateAt = LocalDateTime.now();
     }
-
-    @Enumerated(EnumType.STRING)
-    private UserRoleEnum role;
-
-    @Enumerated(EnumType.STRING)
-    private UserStatusEnum status = UserStatusEnum.ACTIVE;
 
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")

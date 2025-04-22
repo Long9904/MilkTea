@@ -2,10 +2,13 @@ package com.src.milkTea.controller;
 
 import com.src.milkTea.dto.UserDTO;
 import com.src.milkTea.dto.request.UserRequest;
+import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +32,14 @@ public class UserAPI {
         return ResponseEntity.ok(updatedUser);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllUsers() {
-        // Logic to get all users
-        return ResponseEntity.ok("List of all users. Not implemented yet.");
+    // Filter users by name, gender, and role
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterAllUsers(@ParameterObject Pageable pageable,
+                                            @RequestParam(required = false) String name,
+                                            @RequestParam(required = false) String gender,
+                                            @RequestParam(required = false) String role) {
+        PagingResponse<UserDTO> userDTOs = userService.filterUsers(name,gender,role,pageable);
+        return ResponseEntity.ok(userDTOs);
     }
 
-    // Filter users by name, status, gender, and role
 }
