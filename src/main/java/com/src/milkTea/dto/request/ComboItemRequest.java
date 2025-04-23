@@ -1,11 +1,24 @@
 package com.src.milkTea.dto.request;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ComboItemRequest {
-    private Long productId;
-    private int quantity;
 
-    private String size;
+    private List<Item> comboItems;
+
+    @Data
+    @Valid
+    public static class Item {
+        @Pattern(regexp = "^[0-9]+$", message = "Product ID must be a number")
+        private String productId;
+
+        @Min(value = 1, message = "Quantity must be at least 1")
+        private String quantity;
+    }
 }

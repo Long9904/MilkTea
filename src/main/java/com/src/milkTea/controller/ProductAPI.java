@@ -1,9 +1,11 @@
 package com.src.milkTea.controller;
 
+import com.src.milkTea.dto.request.ComboItemRequest;
 import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
@@ -21,6 +23,7 @@ public class ProductAPI {
     @Autowired
     private ProductService productService;
 
+    @Operation (summary = "Create a new product, including combo but not combo item")
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest productRequest) {
         ProductResponse productResponse = productService.createProduct(productRequest);
@@ -58,5 +61,13 @@ public class ProductAPI {
     ) {
         PagingResponse<ProductResponse> response = productService.filterProducts(name, minPrice, maxPrice, categoryName, pageable);
         return ResponseEntity.ok(response);
+    }
+
+    // Update combo details
+    @Operation(summary = "Update or add combo details for a product with type COMBO")
+    @PutMapping("{comboId}/combo")
+    public ResponseEntity<?> updateCombo(@PathVariable Long comboId,
+                                         @Valid @RequestBody ComboItemRequest comboItemRequest) {
+        return ResponseEntity.ok("test");
     }
 }

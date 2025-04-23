@@ -56,10 +56,6 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserStatusEnum status = UserStatusEnum.ACTIVE;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<Orders> orders;
-
     @PrePersist
     public void prePersist() {
         createAt = LocalDateTime.now();
