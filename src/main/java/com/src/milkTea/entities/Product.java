@@ -59,16 +59,6 @@ public class Product {
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
-    // Join with OrderMaster
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<OrderMaster> orderMasters = new ArrayList<>();
-
-    // Join with OrderDetail
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<OrderDetail> orderDetails = new ArrayList<>();
-
     // Join with ComboDetail
     @OneToMany(mappedBy = "childProduct", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
