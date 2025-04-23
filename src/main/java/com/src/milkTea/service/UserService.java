@@ -68,7 +68,7 @@ public class UserService {
 
         // Set the existing ID to ensure we're updating the existing user
         // Take password from user and encode it
-        String password = passwordEncoder.encode(user.getPassword());
+        String password = passwordEncoder.encode(userRequest.getPassword());
         updatedUserEntity.setPassword(password);
         updatedUserEntity.setId(id);
         updatedUserEntity.setUpdateAt(LocalDateTime.now());
