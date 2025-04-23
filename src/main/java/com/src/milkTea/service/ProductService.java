@@ -1,9 +1,12 @@
 package com.src.milkTea.service;
 
+import com.src.milkTea.dto.request.ComboItemRequest;
 import com.src.milkTea.dto.request.ProductRequest;
+import com.src.milkTea.dto.response.ComboItemResponse;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Category;
+import com.src.milkTea.entities.ComboDetail;
 import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.enums.ProductTypeEnum;
@@ -12,8 +15,10 @@ import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.CategoryRepository;
+import com.src.milkTea.repository.ComboDetailRepository;
 import com.src.milkTea.repository.ProductRepository;
 import com.src.milkTea.specification.ProductSpecification;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,6 +29,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -36,6 +43,9 @@ public class ProductService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private ComboDetailRepository comboDetailRepository;
 
     public ProductResponse createProduct(ProductRequest productRequest) {
         // Check duplicate name and product code
@@ -197,6 +207,72 @@ public class ProductService {
         pagingResponse.setLast(products.isLast());
         // Return the PagingResponse
         return pagingResponse;
+    }
+
+    // Update combo details áp dụng cho delete, update, add combo item
+    @Transactional
+    public void updateCombo(Long comboId, ComboItemRequest comboItemRequest) {
+        // Check if the product is a combo
+        Product comboProduct = productRepository.findById(comboId)
+                .orElseThrow(() -> new NotFoundException("Combo not found"));
+        if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
+            throw new StatusException("Product is not a combo");
+        }
+        // Xóa tất cả combo detail cũ --> có nghĩa là ghi đè lên
+        comboDetailRepository.deleteByComboId(comboId);
+
+        // Update the combo details
+        for (ComboItemRequest.Item item : comboItemRequest.getComboItems()) {
+            // Check if the child product exists
+            Product childProduct = productRepository.findById(Long.valueOf(item.getProductId()))
+                    .orElseThrow(() -> new NotFoundException("Child product not found"));
+            // Check if the child product is a combo
+            if (childProduct.getProductType() == ProductTypeEnum.COMBO) {
+                throw new StatusException("Child product is a combo");
+            }
+            // Create a new ComboDetail entity
+            ComboDetail comboDetail = new ComboDetail();
+            comboDetail.setCombo(comboProduct);
+            comboDetail.setChildProduct(childProduct);
+            comboDetail.setQuantity(item.getQuantity());
+            comboDetail.setSize(item.getSize());
+            // Save the combo detail
+            comboDetailRepository.save(comboDetail);
+        }
+        // Do toList() trả về danh sách read-only nên không thể thêm vào db
+        // Hibernate cần một danh sách có thể thay đổi được
+        productRepository.save(comboProduct);
+
+    }
+
+    public ComboItemResponse getComboByProductId(Long productId) {
+
+        // Check if the product is a combo
+        Product comboProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Combo not found"));
+        if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
+            throw new StatusException("Product is not a combo");
+        }
+
+        // Get all combo details by combo id
+        List<ComboDetail> comboDetails = comboDetailRepository.findByComboId(comboProduct.getId());
+        if (comboDetails.isEmpty()) {
+            throw new NotFoundException("Combo details not found");
+        }
+
+        // Convert ComboDetail to ComboItemResponse.Item
+        List<ComboItemResponse.Item> items = comboDetails.stream().map(detail -> {
+            ComboItemResponse.Item item = new ComboItemResponse.Item();
+            item.setProductId(detail.getChildProduct().getId());
+            item.setProductName(detail.getChildProduct().getName());
+            item.setSize(detail.getSize());
+            item.setQuantity(detail.getQuantity());
+            return item;
+        }).collect(Collectors.toList());
+
+        ComboItemResponse response = new ComboItemResponse();
+        response.setItemsResponse(items);
+        return response;
     }
 
 }

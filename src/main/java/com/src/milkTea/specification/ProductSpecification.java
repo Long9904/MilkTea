@@ -72,5 +72,16 @@ public class ProductSpecification {
         };
     }
 
+    public static Specification<Product> leftJoinWithComboDetail() {
+        return (root, query, cb) -> {
+            // LEFT JOIN với bảng ComboDetail
+            Join<Object, Object> comboDetailJoin = root.join("comboDetails", JoinType.LEFT);
+
+            // Không cần điều kiện bổ sung, chỉ thực hiện LEFT JOIN
+            return cb.conjunction(); // Trả về tất cả sản phẩm, không cần điều kiện thêm
+        };
+    }
+
+
 
 }
