@@ -47,8 +47,7 @@ public class Filter extends OncePerRequestFilter {
             new PublicAPI("/swagger-ui/**", null),
             new PublicAPI("/v3/api-docs/**", null),
             new PublicAPI("/swagger-resources/**", null),
-            new PublicAPI("/api/authentication/login", null),
-            new PublicAPI("/api/authentication/register", null)
+            new PublicAPI("/api/authentication/login", null)
             //--Delete this line--//
             ,new PublicAPI("/api/**", null)
             );

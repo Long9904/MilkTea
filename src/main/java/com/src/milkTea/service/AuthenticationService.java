@@ -72,7 +72,7 @@ public class AuthenticationService implements UserDetailsService {
         // Map RegisterRequest to User entity
         User user = new User();
         modelMapper.map(registerRequest, user);
-        user.setPassword(passwordEncoder.encode("Password123"));
+        user.setPassword(passwordEncoder.encode((registerRequest.getPassword())));
         // Set Role
         if(registerRequest.getRole().equalsIgnoreCase("Manager")) {
             user.setRole(UserRoleEnum.MANAGER);
