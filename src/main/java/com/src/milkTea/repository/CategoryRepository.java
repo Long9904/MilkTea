@@ -13,5 +13,5 @@ public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSp
     boolean existsByName(String name);
     boolean existsByNameAndIdNot(String name, Long id); // Check if the name exists but not for the given ID
     Optional<Category> findByIdAndStatus(Long id, ProductStatusEnum productStatusEnum); // Find by ID and status
-    Page<Category> findByNameContainingIgnoreCaseAndStatus(String name, Pageable pageable, ProductStatusEnum status); // Find by name and status
+    Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable); // Find by name and status
 }

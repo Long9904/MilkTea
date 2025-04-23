@@ -49,7 +49,7 @@ public class CategoryAPI {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{name}")
+    @GetMapping("/name")
     public ResponseEntity<?> getCategoryByName(@RequestParam String name, @ParameterObject Pageable pageable) {
         PagingResponse<CategoryResponse> response = categoryService.getCategoryByName(name, pageable);
         return ResponseEntity.ok(response);

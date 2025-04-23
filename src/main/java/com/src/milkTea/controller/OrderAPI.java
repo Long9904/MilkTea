@@ -13,9 +13,10 @@ public class OrderAPI {
         return "Order created successfully!";
     }
 
+    // This api is used to confirm order after the user has selected the payment method
     @PostMapping("/{id}/confirm")
     public String confirmOrder() {
-        return "Order confirmed successfully!";
+        return "Order confirmed successfully    !";
     }
 
     @GetMapping("/filter")
@@ -23,6 +24,7 @@ public class OrderAPI {
         return "Filtered orders successfully!";
     }
 
+    // Get all orders
     @GetMapping("/{id}")
     public String getOrderById() {
         return "Order details retrieved successfully!";

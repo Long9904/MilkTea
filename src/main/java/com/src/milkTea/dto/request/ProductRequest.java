@@ -30,6 +30,9 @@ public class ProductRequest {
     @Pattern(regexp = "^(SINGLE|COMBO)$", message = "Product type must be 'SINGLE' or 'COMBO'")
     private String productType;
 
+    @Pattern(regexp = "^(ACTIVE|DELETED)$", message = "ACTIVE or DELETED")
+    private String status;
+
     @NotBlank(message = "Product usage is required")
     @Pattern(regexp = "^(MAIN|EXTRA)$", message = "Product usage must be 'MAIN' or 'EXTRA'")
     private String productUsage;

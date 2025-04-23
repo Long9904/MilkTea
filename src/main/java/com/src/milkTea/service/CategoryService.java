@@ -57,6 +57,7 @@ public class CategoryService {
         }
 
         modelMapper.map(categoryRequest, existingCategory);
+        existingCategory.setStatus(ProductStatusEnum.valueOf(categoryRequest.getStatus().toUpperCase()));
         return categoryRepository.save(existingCategory);
     }
 
@@ -101,7 +102,7 @@ public class CategoryService {
 
     public PagingResponse<CategoryResponse> getCategoryByName(String name, Pageable pageable) {
         //Find categories by name
-        Page<Category> categories = categoryRepository.findByNameContainingIgnoreCaseAndStatus(name, pageable, ProductStatusEnum.ACTIVE);
+        Page<Category> categories = categoryRepository.findByNameContainingIgnoreCase(name, pageable);
         // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
