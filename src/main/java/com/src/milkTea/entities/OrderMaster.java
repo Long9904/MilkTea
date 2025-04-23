@@ -26,6 +26,8 @@ public class OrderMaster {
 
     private int quantity;
 
+    private String note; // Ghi chú của khách hàng cho mỗi sản phẩm chinh trong đơn hàng
+
     private ProducSizeEnum size;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")

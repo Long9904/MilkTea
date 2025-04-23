@@ -106,6 +106,7 @@ public class ProductService {
         modelMapper.map(productRequest, existingProduct);
         existingProduct.setCategory(category);
         existingProduct.setUpdateAt(LocalDateTime.now());
+        existingProduct.setStatus(ProductStatusEnum.valueOf(productRequest.getStatus()));
         Product updatedProduct = productRepository.save(existingProduct);
 
         // Map to response

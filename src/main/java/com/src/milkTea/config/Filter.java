@@ -48,9 +48,9 @@ public class Filter extends OncePerRequestFilter {
             new PublicAPI("/v3/api-docs/**", null),
             new PublicAPI("/swagger-resources/**", null),
             new PublicAPI("/api/authentication/login", null),
-            new PublicAPI("/api/authentication/register", null),
+            new PublicAPI("/api/authentication/register", null)
             //--Delete this line--//
-            new PublicAPI("/api/**", null) // need delete this line
+            ,new PublicAPI("/api/**", null)
             );
 
     boolean isPermitted(String uri, String method) {
