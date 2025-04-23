@@ -6,6 +6,8 @@ import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Category;
 import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
+import com.src.milkTea.enums.ProductTypeEnum;
+import com.src.milkTea.enums.ProductUsageEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
@@ -128,10 +130,23 @@ public class ProductService {
         return response;
     }
 
-    public PagingResponse<ProductResponse> getAllProducts(Pageable pageable) {
-        // Set default status to ACTIVE
-        Specification<Product> spec = Specification.
-                where(ProductSpecification.hasStatus(ProductStatusEnum.ACTIVE));
+    public PagingResponse<ProductResponse> getAllProducts(Pageable pageable, String productType, String productUsage) {
+        Specification<Product> spec = null;
+
+        if (productType != null && !productType.isEmpty()) {
+            ProductTypeEnum type = ProductTypeEnum.valueOf(productType.toUpperCase());
+            spec = Specification.where(ProductSpecification.productTypeEquals(type));
+        }
+
+        if (productUsage != null && !productUsage.isEmpty()) {
+            ProductUsageEnum usage = ProductUsageEnum.valueOf(productUsage.toUpperCase());
+            if (spec == null) {
+                spec = Specification.where(ProductSpecification.productUsageEquals(usage));
+            } else {
+                spec = spec.or(ProductSpecification.productUsageEquals(usage));
+            }
+        }
+
 
         // Find all products with pagination
         Page<Product> products = productRepository.findAll(spec, pageable);
@@ -163,8 +178,7 @@ public class ProductService {
         Specification<Product> spec = Specification.
                 where(ProductSpecification.nameContains(name))
                 .and(ProductSpecification.priceBetween(minPrice, maxPrice))
-                .and(ProductSpecification.categoryNameContains(categoryName))
-                .and(ProductSpecification.hasStatus(ProductStatusEnum.ACTIVE));
+                .and(ProductSpecification.categoryNameContains(categoryName));
 
         // Find all products with pagination and filtering
         Page<Product> products = productRepository.findAll(spec, pageable);

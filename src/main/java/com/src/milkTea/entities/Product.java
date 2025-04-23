@@ -69,6 +69,11 @@ public class Product {
     @JsonIgnore
     private List<OrderDetail> orderDetails = new ArrayList<>();
 
+    // Join with ComboDetail
+    @OneToMany(mappedBy = "childProduct", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<ComboDetail> comboDetails = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         createAt = LocalDateTime.now();

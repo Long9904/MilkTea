@@ -2,6 +2,8 @@ package com.src.milkTea.specification;
 
 import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.ProductStatusEnum;
+import com.src.milkTea.enums.ProductTypeEnum;
+import com.src.milkTea.enums.ProductUsageEnum;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,6 +50,25 @@ public class ProductSpecification {
             // mặc định sử dụng ACTIVE
             ProductStatusEnum finalStatus = (status == null) ? ProductStatusEnum.ACTIVE : status;
             return cb.equal(root.get("status"), finalStatus);
+        };
+    }
+    // Specification cho các truy vấn tìm kiếm sản phẩm theo loại sản phẩm (productType)
+    public static Specification<Product> productTypeEquals(ProductTypeEnum productType) {
+        return (root, query, cb) -> {
+            if (productType == null || String.valueOf(productType).isEmpty()) {
+                return cb.conjunction(); // Không lọc nếu không truyền productType
+            }
+            return cb.equal(root.get("productType"), productType);
+        };
+    }
+
+
+    public static Specification<Product> productUsageEquals(ProductUsageEnum productUsage) {
+        return (root, query, cb) -> {
+            if (productUsage == null || String.valueOf(productUsage).isEmpty()) {
+                return cb.conjunction(); // Không lọc nếu không truyền productType
+            }
+            return cb.equal(root.get("productUsage"), productUsage);
         };
     }
 

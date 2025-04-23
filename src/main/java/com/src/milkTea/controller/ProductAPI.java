@@ -34,8 +34,12 @@ public class ProductAPI {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllProducts(@ParameterObject Pageable pageable) {
-        PagingResponse<ProductResponse> response = productService.getAllProducts(pageable);
+    public ResponseEntity<?> getAllProducts(@ParameterObject Pageable pageable,
+                                            @RequestParam(required = false) String productType,
+                                            @RequestParam(required = false) String productUsage
+
+    ) {
+        PagingResponse<ProductResponse> response = productService.getAllProducts(pageable, productType, productUsage);
         return ResponseEntity.ok(response);
     }
 

@@ -79,11 +79,11 @@ public class CategoryService {
 
     public PagingResponse<CategoryResponse> getAllCategories(Pageable pageable) {
 
-        Specification<Category> spec = Specification
-                .where(CategorySpecification.hasStatus(ProductStatusEnum.ACTIVE));
+//        Specification<Category> spec = Specification
+//                .where(CategorySpecification.hasStatus(ProductStatusEnum.ACTIVE));
 
         // Find all categories
-        Page<Category> categories = categoryRepository.findAll(spec, pageable);
+        Page<Category> categories = categoryRepository.findAll(pageable);
         // Check if there are any categories
         List<CategoryResponse> categoryResponses = categories.getContent().stream()
                 .map(category -> modelMapper.map(category, CategoryResponse.class))
