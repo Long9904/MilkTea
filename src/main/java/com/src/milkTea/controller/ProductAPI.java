@@ -68,6 +68,15 @@ public class ProductAPI {
     @PutMapping("{comboId}/combo")
     public ResponseEntity<?> updateCombo(@PathVariable Long comboId,
                                          @Valid @RequestBody ComboItemRequest comboItemRequest) {
-        return ResponseEntity.ok("test");
+
+        productService.updateCombo(comboId, comboItemRequest);
+        return ResponseEntity.ok("Update combo success");
+    }
+
+    // Get combo details by productId
+    @Operation(summary = "Get combo details by productId")
+    @GetMapping("{productId}/combo")
+    public ResponseEntity<?> getComboByProductId(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.getComboByProductId(productId));
     }
 }

@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Entity
 @Data

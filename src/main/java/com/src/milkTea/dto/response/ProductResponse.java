@@ -46,5 +46,4 @@ public class ProductResponse {
 
     private String categoryName;
 
-    List<ComboItemResponse> comboItems;
 }
