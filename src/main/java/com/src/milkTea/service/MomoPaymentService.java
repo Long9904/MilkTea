@@ -37,10 +37,10 @@ public class MomoPaymentService {
     @Value("${momo.endpoint}")
     private String endpoint;
 
-    @Value("${momo.redirectUrl}")
+//    @Value("${momo.redirectUrl}")
     private String redirectUrl;
 
-    @Value("${momo.ipnUrl}")
+//    @Value("${momo.ipnUrl}")
     private String ipnUrl;
 
 
