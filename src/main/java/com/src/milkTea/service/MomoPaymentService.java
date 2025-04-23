@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.src.milkTea.dto.request.MomoIPNRequest;
 import com.src.milkTea.dto.request.MomoPaymentRequest;
-import com.src.milkTea.entities.MomoTransaction;
+import com.src.milkTea.entities.Payment;
 import com.src.milkTea.enums.TransactionEnum;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.TransactionException;
@@ -54,7 +54,7 @@ public class MomoPaymentService {
         String orderInfo = "Thanh toán đơn hàng #" + orderId;
         String extraData = "";
 
-        MomoTransaction transaction = new MomoTransaction();
+        Payment transaction = new Payment();
         transaction.setOrderId(orderId);
         transaction.setRequestId(requestId);
         transaction.setAmount(amount);
@@ -104,7 +104,7 @@ public class MomoPaymentService {
         String orderId = request.getOrderId();
         String resultCode = request.getResultCode();
 
-        MomoTransaction transaction = momoTransactionRepository.findByOrderId(orderId)
+        Payment transaction = momoTransactionRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
         if ("0".equals(resultCode)) {

@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class RegisterRequest {
 
-    @Schema(description = "Email", example = "registerEmail@gmail.com")
+    @Schema(description = "Email", example = "user1@gmail.com")
     @Email(message = "Email should be valid")
     private String email;
 
@@ -22,7 +22,7 @@ public class RegisterRequest {
             message = "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit")
     private String password;
 
-    @Schema(description = "Full name of the user", example = "Long Cha")
+    @Schema(description = "Full name of the user", example = "Minh Vũ")
     @Size(min = 1, max = 30, message = "Full name must be between 1 and 30 characters")
     @NotBlank(message = "Full name is required")
     private String fullName;

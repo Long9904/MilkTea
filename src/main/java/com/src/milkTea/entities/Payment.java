@@ -12,15 +12,16 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MomoTransaction {
+public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String orderId;
-    private String requestId;
+    private String requestId; // request id from Momo, null if not yet paid or payment method is not Momo
     private String amount;
+
     @Enumerated(EnumType.STRING)
     private TransactionEnum status; // pending, success, failed
 
