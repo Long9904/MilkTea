@@ -23,4 +23,5 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Page<Product> findByCategoryIdAndStatus(Long categoryId, ProductStatusEnum status ,Pageable pageable);
 
+
 }

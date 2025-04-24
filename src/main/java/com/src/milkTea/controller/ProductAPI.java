@@ -79,4 +79,11 @@ public class ProductAPI {
     public ResponseEntity<?> getComboByProductId(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getComboByProductId(productId));
     }
+
+    // Xem product by id
+    @Operation(summary = "Get product by id")
+    @GetMapping("{productId}")
+    public ResponseEntity<?> getProductById(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.getProductById(productId));
+    }
 }
