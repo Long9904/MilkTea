@@ -69,7 +69,7 @@ public class ProductAPI {
     public ResponseEntity<?> updateCombo(@PathVariable Long comboId,
                                          @Valid @RequestBody ComboItemRequest comboItemRequest) {
 
-        productService.updateCombo(comboId, comboItemRequest);
+        productService.updateComboItem(comboId, comboItemRequest);
         return ResponseEntity.ok("Update combo success");
     }
 
