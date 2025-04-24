@@ -19,11 +19,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class MomoPaymentService {
+public class PaymentService {
 
     @Value("${momo.partnerCode}")
     private String partnerCode;
@@ -48,14 +50,19 @@ public class MomoPaymentService {
     private MomoTransactionRepository momoTransactionRepository;
 
 
-    public Map<String, Object> createMomoPayment(String amount) throws Exception {
-        String orderId = UUID.randomUUID().toString(); // thay bằng orderId thực tế từ table Order
-        String requestId = UUID.randomUUID().toString(); // thay bằng custom requestId (orderId + timestamp)
-        String orderInfo = "Thanh toán đơn hàng #" + orderId;
+    public Map<String, Object> createMomoPayment(String amount, Long orderId) throws Exception {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyy'T'HHmmss");
+        String formatted = now.format(formatter);
+
+        String requestId = formatted + "ORDER" + orderId; // thay bằng custom requestId (orderId + timestamp)
+        String orderInfo = "Thanh toán đơn hàng #" + requestId + " tại Milk Tea: " + amount + " VNĐ";
         String extraData = "";
 
         Payment transaction = new Payment();
-        transaction.setOrderId(orderId);
+        transaction.setOrderId(orderId.toString());
         transaction.setRequestId(requestId);
         transaction.setAmount(amount);
         transaction.setStatus(TransactionEnum.PENDING);
@@ -82,7 +89,7 @@ public class MomoPaymentService {
 
         MomoPaymentRequest request = new MomoPaymentRequest(
                 partnerCode, accessKey, requestId, amount,
-                orderId, orderInfo, redirectUrl, ipnUrl,
+                orderId.toString(), orderInfo, redirectUrl, ipnUrl,
                 extraData, "captureWallet", signature, "vi"
         );
 
@@ -94,9 +101,8 @@ public class MomoPaymentService {
         ResponseEntity<String> response = restTemplate.postForEntity(endpoint, entity, String.class);
 
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> result = mapper.readValue(response.getBody(), new TypeReference<>() {});
 
-        return result;
+        return mapper.readValue(response.getBody(), new TypeReference<>() {});
     }
 
 

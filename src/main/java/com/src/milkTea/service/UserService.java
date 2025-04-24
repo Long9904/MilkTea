@@ -72,6 +72,7 @@ public class UserService {
         updatedUserEntity.setPassword(password);
         updatedUserEntity.setId(id);
         updatedUserEntity.setUpdateAt(LocalDateTime.now());
+        updatedUserEntity.setStatus(UserStatusEnum.valueOf(userRequest.getStatus()));
         // Save the updated user
         User updatedUser = userRepository.save(updatedUserEntity);
 

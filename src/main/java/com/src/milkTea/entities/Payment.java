@@ -1,5 +1,6 @@
 package com.src.milkTea.entities;
 
+import com.src.milkTea.enums.PaymentMethodEnum;
 import com.src.milkTea.enums.TransactionEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,9 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private TransactionEnum status; // pending, success, failed
 
-    private String message; // response message from Momo
+    private String message; // response message from Momo or other payment methods
+
+    private PaymentMethodEnum paymentMethod; // momo, cash, bank transfer, etc.
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
