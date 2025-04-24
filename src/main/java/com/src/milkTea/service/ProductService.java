@@ -275,4 +275,14 @@ public class ProductService {
         return response;
     }
 
+    public ProductResponse getProductById(Long productId) {
+        Optional<Product> products = productRepository.findById(productId);
+        //
+        if (products.isEmpty()) {
+            throw new NotFoundException("Product not found");
+        }
+        Product product = products.get();
+        // Convert Product to ProductResponse
+        return convertToProductResponse(product);
+    }
 }
