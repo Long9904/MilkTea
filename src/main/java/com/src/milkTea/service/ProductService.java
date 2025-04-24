@@ -211,7 +211,7 @@ public class ProductService {
 
     // Update combo details áp dụng cho delete, update, add combo item
     @Transactional
-    public void updateCombo(Long comboId, ComboItemRequest comboItemRequest) {
+    public void updateComboItem(Long comboId, ComboItemRequest comboItemRequest) {
         // Check if the product is a combo
         Product comboProduct = productRepository.findById(comboId)
                 .orElseThrow(() -> new NotFoundException("Combo not found"));

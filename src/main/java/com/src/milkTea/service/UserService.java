@@ -110,4 +110,13 @@ public class UserService {
         // Return the PagingResponse
         return pagingResponse;
     }
+
+    public UserDTO getUserById(Long id) {
+        // Check if user exists
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Convert the user entity to a UserDTO
+        return modelMapper.map(user, UserDTO.class);
+    }
 }

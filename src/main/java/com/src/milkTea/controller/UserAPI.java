@@ -42,4 +42,11 @@ public class UserAPI {
         return ResponseEntity.ok(userDTOs);
     }
 
+    // Get user by id
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        UserDTO userDTO = userService.getUserById(id);
+        return ResponseEntity.ok(userDTO);
+    }
+
 }
