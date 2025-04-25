@@ -56,9 +56,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserStatusEnum status = UserStatusEnum.ACTIVE;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    @JsonIgnore
-//    private List<Orders> orders;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Orders> orders;
 
     @PrePersist
     public void prePersist() {

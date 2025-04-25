@@ -1,6 +1,7 @@
 package com.src.milkTea.controller;
 
 import com.src.milkTea.dto.request.ComboItemRequest;
+import com.src.milkTea.dto.request.ComboItemRequestV2;
 import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
@@ -88,5 +89,12 @@ public class ProductAPI {
     @GetMapping("{productId}")
     public ResponseEntity<?> getProductById(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProductById(productId));
+    }
+
+    @PutMapping("v2/{comboId}/combo")
+    public ResponseEntity<?> updateComboV2(@PathVariable Long comboId,
+                                           @Valid @RequestBody ComboItemRequestV2 comboItemRequestV2) {
+
+        return ResponseEntity.ok(productService.updateComboWithDetail(comboId, comboItemRequestV2));
     }
 }

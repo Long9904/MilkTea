@@ -20,7 +20,7 @@ public class UserUtils implements ApplicationContextAware {
         authenticationRepository = applicationContext.getBean(AuthenticationRepository.class);
     }
 
-    public static User getCurrentUser() {
+    public User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return authenticationRepository.findUserByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));

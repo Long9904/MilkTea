@@ -65,9 +65,9 @@ public class Product {
     private List<ComboDetail> comboDetails = new ArrayList<>();
 
     // Join with OrderDetail
-//    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//    @JsonIgnore
-//    private List<OrderDetail> orderDetails = new ArrayList<>();
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<OrderDetail> orderDetails = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
