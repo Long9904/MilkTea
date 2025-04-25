@@ -57,9 +57,12 @@ public class ProductAPI {
                                             @RequestParam(required = false) String name,
                                             @RequestParam(required = false) Double minPrice,
                                             @RequestParam(required = false) Double maxPrice,
-                                            @RequestParam(required = false) String categoryName
+                                            @RequestParam(required = false) String categoryName,
+                                            @RequestParam(required = false) String productType,
+                                            @RequestParam(required = false) String productUsage
     ) {
-        PagingResponse<ProductResponse> response = productService.filterProducts(name, minPrice, maxPrice, categoryName, pageable);
+        PagingResponse<ProductResponse> response =
+                productService.filterProducts(name, minPrice, maxPrice, categoryName,productType, productUsage, pageable);
         return ResponseEntity.ok(response);
     }
 

@@ -121,4 +121,13 @@ public class GlobalException {
         msg.put("details", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
     }
+
+    // Xử lí lỗi không hợp lệ
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+    }
 }

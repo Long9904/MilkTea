@@ -183,12 +183,24 @@ public class ProductService {
                                                           Double minPrice,
                                                           Double maxPrice,
                                                           String categoryName,
+                                                          String productType,
+                                                          String productUsage,
                                                           Pageable pageable) {
         // Create a Specification to filter products
         Specification<Product> spec = Specification.
                 where(ProductSpecification.nameContains(name))
                 .and(ProductSpecification.priceBetween(minPrice, maxPrice))
                 .and(ProductSpecification.categoryNameContains(categoryName));
+
+        if (productType != null && !productType.isEmpty()) {
+            ProductTypeEnum type = ProductTypeEnum.valueOf(productType.toUpperCase());
+            spec = spec.and(ProductSpecification.productTypeEquals(type));
+        }
+
+        if (productUsage != null && !productUsage.isEmpty()) {
+            ProductUsageEnum usage = ProductUsageEnum.valueOf(productUsage.toUpperCase());
+            spec = spec.and(ProductSpecification.productUsageEquals(usage));
+        }
 
         // Find all products with pagination and filtering
         Page<Product> products = productRepository.findAll(spec, pageable);

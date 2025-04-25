@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Data
@@ -54,6 +55,10 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private UserStatusEnum status = UserStatusEnum.ACTIVE;
+
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonIgnore
+//    private List<Orders> orders;
 
     @PrePersist
     public void prePersist() {
