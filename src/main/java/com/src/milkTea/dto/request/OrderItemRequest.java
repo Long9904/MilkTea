@@ -1,7 +1,5 @@
 package com.src.milkTea.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -36,15 +34,7 @@ public class OrderItemRequest {
                     "    \"quantity\": 2,\n" +
                     "    \"size\": \"M\",\n" +
                     "    \"isCombo\": false,\n" +
-                    "    \"childItems\": [\n" +
-                    "      {\n" +
-                    "        \"productId\": 303,\n" +
-                    "        \"quantity\": 1,\n" +
-                    "        \"size\": \"null\",\n" +
-                    "        \"isCombo\": false,\n" +
-                    "        \"childItems\": []\n" +
-                    "      }\n" +
-                    "    ]\n" +
+                    "    \"childItems\": []\n" +
                     "  }\n" +
                     "]")
     private List<OrderItemRequest> childItems = new ArrayList<>();

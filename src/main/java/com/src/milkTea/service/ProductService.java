@@ -1,6 +1,7 @@
 package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.ComboItemRequest;
+import com.src.milkTea.dto.request.ComboItemRequestV2;
 import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.ComboItemResponse;
 import com.src.milkTea.dto.response.PagingResponse;
@@ -95,8 +96,7 @@ public class ProductService {
 
     public ProductResponse updateProduct(Long productId, ProductRequest productRequest) {
         // Check if the product exists
-        Product existingProduct = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found"));
+        Product existingProduct = productRepository.findById(productId).orElseThrow(() -> new NotFoundException("Product not found"));
 
         // Check duplicate name and product code
         List<String> duplicates = new ArrayList<>();
@@ -297,4 +297,38 @@ public class ProductService {
         // Convert Product to ProductResponse
         return convertToProductResponse(product);
     }
+
+    @Transactional
+    public ProductResponse updateComboWithDetail(Long comboId, ComboItemRequestV2 request) {
+        // 1. Tạo ProductRequest từ ComboItemRequestV2
+        ProductRequest productRequest = getProductRequest(request);
+
+        // 2. Gọi hàm cập nhật sản phẩm có sẵn
+        ProductResponse productResponse = updateProduct(comboId, productRequest);
+
+        // 3. Tạo ComboItemRequest từ ComboItemRequestV2
+        ComboItemRequest comboItemRequest = new ComboItemRequest();
+        comboItemRequest.setComboItems(request.getComboItems());
+
+        // 4. Gọi hàm cập nhật combo detail có sẵn
+        updateComboItem(comboId, comboItemRequest);
+
+        // 5. Trả lại response từ hàm updateProduct
+        return productResponse;
+    }
+
+    private static ProductRequest getProductRequest(ComboItemRequestV2 request) {
+        ProductRequest productRequest = new ProductRequest();
+        productRequest.setName(request.getName());
+        productRequest.setBasePrice(request.getBasePrice());
+        productRequest.setProductCode(request.getProductCode());
+        productRequest.setImageUrl(request.getImageUrl());
+        productRequest.setDescription(request.getDescription());
+        productRequest.setProductType(request.getProductType());
+        productRequest.setStatus(request.getStatus());
+        productRequest.setProductUsage(request.getProductUsage());
+        productRequest.setCategoryId(request.getCategoryId());
+        return productRequest;
+    }
+
 }
