@@ -12,8 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequest {
-    @Schema(description = "Ghi chú cho đơn hàng", example = "Nhiều đá")
-    private String note;
 
     @Schema(description = "Danh sách các sản phẩm trong đơn hàng")
     private List<OrderItemRequest> parentItems = new ArrayList<>();
