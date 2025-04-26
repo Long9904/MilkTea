@@ -130,4 +130,13 @@ public class GlobalException {
         msg.put("details", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
     }
+
+    //Xử lí lỗi liên quan đến product
+    @ExceptionHandler(ProductException.class)
+    public ResponseEntity<Map<String, Object>> handleProductException(ProductException ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+    }
 }
