@@ -4,6 +4,7 @@ import com.src.milkTea.dto.request.ComboItemRequest;
 import com.src.milkTea.dto.request.ComboItemRequestV2;
 import com.src.milkTea.dto.request.ProductRequest;
 import com.src.milkTea.dto.response.ComboItemResponse;
+import com.src.milkTea.dto.response.ComboItemResponseV2;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.ProductResponse;
 import com.src.milkTea.entities.Category;
@@ -331,4 +332,54 @@ public class ProductService {
         return productRequest;
     }
 
+    public ComboItemResponseV2 getProductByIdV2(Long productId) {
+        // Check if the product is a combo
+        Product comboProduct = productRepository.findByIdWithCategory(productId)
+                .orElseThrow(() -> new NotFoundException("Combo not found"));
+
+        if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
+            throw new StatusException("Product is not a combo");
+        }
+
+        // Get all combo details by combo id
+        List<ComboDetail> comboDetails = comboDetailRepository.findByComboId(comboProduct.getId());
+        if (comboDetails.isEmpty()) {
+            throw new NotFoundException("Combo details not found");
+        }
+       // Map product to ComboResponseV2
+        ComboItemResponseV2 comboItemResponseV2 = getComboItemResponseV2(comboProduct);
+
+        // Convert ComboDetail to ComboItemResponse.Item
+        for (ComboDetail detail : comboDetails) {
+            ComboItemResponseV2.Item item = new ComboItemResponseV2.Item();
+            item.setProductId(detail.getChildProduct().getId());
+            item.setProductName(detail.getChildProduct().getName());
+            item.setSize(detail.getSize());
+            item.setQuantity(detail.getQuantity());
+            if (comboItemResponseV2.getItemsResponse() == null) {
+                comboItemResponseV2.setItemsResponse(new ArrayList<>());
+            }
+            comboItemResponseV2.getItemsResponse().add(item);
+        }
+        return comboItemResponseV2;
+    }
+
+    private static ComboItemResponseV2 getComboItemResponseV2(Product comboProduct) {
+        ComboItemResponseV2 comboItemResponseV2 = new ComboItemResponseV2();
+        comboItemResponseV2.setId(comboProduct.getId());
+        comboItemResponseV2.setName(comboProduct.getName());
+        comboItemResponseV2.setBasePrice(comboProduct.getBasePrice());
+        comboItemResponseV2.setProductCode(comboProduct.getProductCode());
+        comboItemResponseV2.setImageUrl(comboProduct.getImageUrl());
+        comboItemResponseV2.setDescription(comboProduct.getDescription());
+        comboItemResponseV2.setProductType(comboProduct.getProductType());
+        comboItemResponseV2.setProductUsage(comboProduct.getProductUsage());
+        comboItemResponseV2.setStatus(comboProduct.getStatus());
+        comboItemResponseV2.setCategoryId(comboProduct.getCategory().getId());
+        comboItemResponseV2.setCategoryName(comboProduct.getCategory().getName());
+        comboItemResponseV2.setCreateAt(comboProduct.getCreateAt());
+        comboItemResponseV2.setUpdateAt(comboProduct.getUpdateAt());
+        comboItemResponseV2.setDeleteAt(comboProduct.getDeleteAt());
+        return comboItemResponseV2;
+    }
 }

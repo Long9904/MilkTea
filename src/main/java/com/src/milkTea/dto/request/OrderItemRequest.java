@@ -23,6 +23,8 @@ public class OrderItemRequest {
     @Schema(description = "Kích thước của sản phẩm", example = "L")
     private String size;
 
+    private String note;
+
     @Schema(description = "Xác định xem sản phẩm có phải là combo không", example = "true")
     @JsonProperty("isCombo")
     private boolean isCombo;
@@ -33,6 +35,7 @@ public class OrderItemRequest {
                     "    \"productId\": 202,\n" +
                     "    \"quantity\": 2,\n" +
                     "    \"size\": \"M\",\n" +
+                    "    \"note\": \"nhiều đá\",\n" +
                     "    \"isCombo\": false,\n" +
                     "    \"childItems\": []\n" +
                     "  }\n" +

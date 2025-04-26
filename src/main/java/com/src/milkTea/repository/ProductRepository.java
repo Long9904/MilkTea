@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 
 import java.util.Optional;
@@ -23,5 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Page<Product> findByCategoryIdAndStatus(Long categoryId, ProductStatusEnum status ,Pageable pageable);
 
+    @Query("SELECT p FROM Product p JOIN FETCH p.category c WHERE p.id = :id")
+    Optional<Product> findByIdWithCategory(Long id);
 
 }

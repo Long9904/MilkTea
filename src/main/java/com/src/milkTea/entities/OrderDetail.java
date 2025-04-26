@@ -30,6 +30,8 @@ public class OrderDetail {
 
     private boolean isCombo;
 
+    private String note;
+
     private LocalDateTime createAt;
 
     private LocalDateTime updateAt;

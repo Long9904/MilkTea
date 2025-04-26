@@ -40,20 +40,14 @@ public class OrderService {
     private ComboDetailRepository comboDetailRepository;
 
 
-    public Orders createCart(String note) {
+    public Orders addItemToCart(OrderRequest orderRequest) {
+
         Orders order = new Orders();
-        order.setNote(note);
         order.setUser(userUtils.getCurrentUser());
         order.setStatus(OrderStatusEnum.PENDING);
         order.setTotalPrice(0);
-        order.setOrderDetails(null);
-        return orderRepository.save(order);
-    }
-
-
-    public Orders addItemToCart(OrderRequest orderRequest, Long orderId) {
-
-        Orders order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
+        Orders savedOrder = orderRepository.save(order);
+        boolean isSuccessOrder = false;
 
         double totalPrice = 0;
 
@@ -62,7 +56,8 @@ public class OrderService {
         for (OrderItemRequest item : orderRequest.getParentItems()) {
 
             if (item.isCombo()) {
-                Product comboProduct = productRepository.findById(item.getProductId()).orElseThrow(() -> new NotFoundException("Combo product not found"));
+                Product comboProduct = productRepository.findById(item.getProductId()).orElseThrow(()
+                        -> new NotFoundException("Combo product not found"));
 
                 if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
                     throw new ProductException("Product is not a combo");
@@ -70,13 +65,13 @@ public class OrderService {
 
                 // Tạo OrderDetail cha cho combo
                 OrderDetail comboDetail = new OrderDetail();
-                comboDetail.setOrders(order);
+                comboDetail.setOrders(savedOrder);
                 comboDetail.setProduct(comboProduct);
                 comboDetail.setQuantity(item.getQuantity());
                 comboDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
                 comboDetail.setUnitPrice(comboProduct.getBasePrice());
                 comboDetail.setCombo(true);
-
+                comboDetail.setNote(item.getNote());
                 OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
                 totalPrice += comboProduct.getBasePrice() * item.getQuantity();
 
@@ -86,22 +81,24 @@ public class OrderService {
                     Product childProduct = comboItem.getChildProduct();
 
                     OrderDetail childDetail = new OrderDetail();
-                    childDetail.setOrders(order);
+                    childDetail.setOrders(savedOrder);
                     childDetail.setProduct(childProduct);
                     childDetail.setParent(savedComboDetail);
                     childDetail.setQuantity(comboItem.getQuantity() * item.getQuantity()); // nhân theo số lượng combo
                     childDetail.setSize(ProducSizeEnum.valueOf(comboItem.getSize()));
                     childDetail.setUnitPrice(0); // miễn phí, vì đã gộp giá trong combo
-                    childDetail.setCombo(true);
+                    childDetail.setCombo(false);
                     orderDetailRepository.save(childDetail);
                 }
+                isSuccessOrder = true;
 
             } else {
                 // Xử lý cho sản phẩm thông thường
                 OrderDetail orderDetail = new OrderDetail();
                 orderDetail.setQuantity(item.getQuantity());
                 orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
-                Product product = productRepository.findById(item.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
+                Product product = productRepository.findById(item.getProductId()).orElseThrow(()
+                        -> new NotFoundException("Product not found"));
 
                 switch (item.getSize()) {
                     case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
@@ -129,7 +126,7 @@ public class OrderService {
                     childOrderDetail.setUnitPrice(childProduct.getBasePrice());
 
                     childOrderDetail.setProduct(childProduct);
-                    childOrderDetail.setOrders(order);
+                    childOrderDetail.setOrders(savedOrder);
                     childOrderDetail.setParent(savedOrderDetail); // Set parent
                     childOrderDetail.setCombo(false);
                     orderDetailRepository.save(childOrderDetail);
@@ -137,11 +134,12 @@ public class OrderService {
                     // Tính tổng giá trị đơn hàng
                     totalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
                 }
+                isSuccessOrder = true;
             }
         }
         // Cập nhật tổng giá trị đơn hàng
-        order.setTotalPrice(totalPrice);
-        return orderRepository.save(order);
+        savedOrder.setTotalPrice(totalPrice);
+        return orderRepository.save(savedOrder);
     }
 
 

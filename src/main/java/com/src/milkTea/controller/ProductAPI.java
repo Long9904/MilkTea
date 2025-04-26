@@ -91,10 +91,14 @@ public class ProductAPI {
         return ResponseEntity.ok(productService.getProductById(productId));
     }
 
-    @PutMapping("v2/{comboId}/combo")
+    @PostMapping("v2/{comboId}/combo")
     public ResponseEntity<?> updateComboV2(@PathVariable Long comboId,
                                            @Valid @RequestBody ComboItemRequestV2 comboItemRequestV2) {
 
         return ResponseEntity.ok(productService.updateComboWithDetail(comboId, comboItemRequestV2));
+    }
+    @GetMapping("v2/{productId}")
+    public ResponseEntity<?> getProductByIdV2(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.getProductByIdV2(productId));
     }
 }

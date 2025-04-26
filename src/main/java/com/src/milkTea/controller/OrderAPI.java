@@ -16,14 +16,9 @@ public class OrderAPI {
     private OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest,
-                                         @RequestParam Long orderId) {
-        orderService.addItemToCart(orderRequest, orderId);
-        return ResponseEntity.ok("Item added to cart successfully");
+    public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest) {
+
+        return ResponseEntity.ok(orderService.addItemToCart(orderRequest));
     }
 
-    @PostMapping("/cart")
-    public ResponseEntity<?> createCart(@RequestParam String note) {
-        return ResponseEntity.ok(orderService.createCart(note));
-    }
 }
