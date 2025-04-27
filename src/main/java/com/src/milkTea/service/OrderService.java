@@ -12,6 +12,7 @@ import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.OrderStatusEnum;
 import com.src.milkTea.enums.ProducSizeEnum;
 import com.src.milkTea.enums.ProductTypeEnum;
+import com.src.milkTea.enums.ProductUsageEnum;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.ProductException;
 import com.src.milkTea.repository.ComboDetailRepository;
@@ -118,6 +119,9 @@ public class OrderService {
                         if (toppingProduct.getProductType() == ProductTypeEnum.COMBO) {
                             throw new ProductException("Product is not a SINGLE product");
                         } // Không cho combo như là topping
+                        if (toppingProduct.getProductUsage() == ProductUsageEnum.MAIN) {
+                            throw new ProductException("Product is not a EXTRA product");
+                        } // Không cho combo như là 1 sản phẩm SINGLE
 
                         OrderDetail toppingDetail = new OrderDetail();
                         toppingDetail.setOrders(savedOrder);
@@ -170,6 +174,11 @@ public class OrderService {
                     childOrderDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
                     Product childProduct = productRepository.findById(childItem.getProductId()).orElseThrow(()
                             -> new RuntimeException("Product not found"));
+
+                    // Kiểm tra xem sản phẩm con có phải là combo hoặc ly trà sữa không
+                    if ( childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
+                        throw new ProductException("Product is not a EXTRA product");
+                    } // Không cho combo như là 1 sản phẩm SINGLE
 
                     childOrderDetail.setUnitPrice(childProduct.getBasePrice());
 
