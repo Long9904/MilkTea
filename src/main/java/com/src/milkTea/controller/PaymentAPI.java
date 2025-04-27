@@ -30,7 +30,7 @@ public class PaymentAPI {
     @Operation (summary = "Momo payment success callback")
     @GetMapping("/success")
     public String paymentSuccess() {
-        return "Thanh tóan thành công";
+        return "Thanh toán thành công";
     }
 
     // Momo payment success callback
