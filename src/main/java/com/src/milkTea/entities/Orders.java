@@ -1,5 +1,6 @@
 package com.src.milkTea.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.src.milkTea.enums.OrderStatusEnum;
 import jakarta.persistence.*;
@@ -24,17 +25,22 @@ public class Orders {
     @Enumerated(EnumType.STRING)
     private OrderStatusEnum status;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime updateAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime deleteAt;
 
+    // Join column for the relationship with User
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     @JsonIgnore
     private User user;
 
+    // Join column for the relationship with OrderDetail
     @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<OrderDetail> orderDetails;

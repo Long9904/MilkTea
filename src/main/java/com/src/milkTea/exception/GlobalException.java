@@ -122,7 +122,7 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
     }
 
-    // Xử lí lỗi không hợp lệ
+    // Xử lí lỗi không hợp lệ ( cái này nên bắt bằng custom exception)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
         Map<String, Object> msg = new HashMap<>();
