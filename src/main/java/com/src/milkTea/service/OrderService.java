@@ -2,6 +2,9 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
+import com.src.milkTea.dto.response.OrderDetailResponse;
+import com.src.milkTea.dto.response.OrderResponse;
+import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.ComboDetail;
 import com.src.milkTea.entities.OrderDetail;
 import com.src.milkTea.entities.Orders;
@@ -15,11 +18,19 @@ import com.src.milkTea.repository.ComboDetailRepository;
 import com.src.milkTea.repository.OrderDetailRepository;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.ProductRepository;
+import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderService {
@@ -39,6 +50,9 @@ public class OrderService {
     @Autowired
     private ComboDetailRepository comboDetailRepository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
 
     public Orders addItemToCart(OrderRequest orderRequest) {
 
@@ -56,8 +70,8 @@ public class OrderService {
         for (OrderItemRequest item : orderRequest.getParentItems()) {
 
             if (item.isCombo()) {
-                Product comboProduct = productRepository.findById(item.getProductId()).orElseThrow(()
-                        -> new NotFoundException("Combo product not found"));
+                Product comboProduct = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new NotFoundException("Combo product not found"));
 
                 if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
                     throw new ProductException("Product is not a combo");
@@ -68,29 +82,58 @@ public class OrderService {
                 comboDetail.setOrders(savedOrder);
                 comboDetail.setProduct(comboProduct);
                 comboDetail.setQuantity(item.getQuantity());
-                comboDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
+                comboDetail.setSize(ProducSizeEnum.NONE);
                 comboDetail.setUnitPrice(comboProduct.getBasePrice());
                 comboDetail.setCombo(true);
                 comboDetail.setNote(item.getNote());
                 OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
+
                 totalPrice += comboProduct.getBasePrice() * item.getQuantity();
 
-                // Lấy danh sách thành phần combo từ bảng ComboDetail
-                List<ComboDetail> comboItems = comboDetailRepository.findByCombo(comboProduct);
-                for (ComboDetail comboItem : comboItems) {
-                    Product childProduct = comboItem.getChildProduct();
+                // Xử lý các childItems trong combo (ly trà sữa trong combo)
+                for (OrderItemRequest childItem : item.getChildItems()) {
+                    Product childProduct = productRepository.findById(childItem.getProductId())
+                            .orElseThrow(() -> new NotFoundException("Child product not found"));
+                    //
+                    if (childProduct.getProductType() == ProductTypeEnum.COMBO) {
+                        throw new ProductException("Product is not a SINGLE product");
+                    }// Không cho combo như là 1 sản phẩm SINGLE
 
                     OrderDetail childDetail = new OrderDetail();
                     childDetail.setOrders(savedOrder);
                     childDetail.setProduct(childProduct);
-                    childDetail.setParent(savedComboDetail);
-                    childDetail.setQuantity(comboItem.getQuantity() * item.getQuantity()); // nhân theo số lượng combo
-                    childDetail.setSize(ProducSizeEnum.valueOf(comboItem.getSize()));
-                    childDetail.setUnitPrice(0); // miễn phí, vì đã gộp giá trong combo
+                    childDetail.setParent(savedComboDetail); // Parent là combo
+                    childDetail.setQuantity(childItem.getQuantity());
+                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+                    childDetail.setUnitPrice(0); // Sản phẩm con trong combo giá 0
                     childDetail.setCombo(false);
-                    orderDetailRepository.save(childDetail);
+                    childDetail.setNote(childItem.getNote());
+                    OrderDetail savedChildDetail = orderDetailRepository.save(childDetail);
+
+                    // Xử lý tiếp topping nếu có (childItems của ly trà sữa)
+                    for (OrderItemRequest toppingItem : childItem.getChildItems()) {
+                        Product toppingProduct = productRepository.findById(toppingItem.getProductId())
+                                .orElseThrow(() -> new NotFoundException("Topping product not found"));
+
+                        if (toppingProduct.getProductType() == ProductTypeEnum.COMBO) {
+                            throw new ProductException("Product is not a SINGLE product");
+                        } // Không cho combo như là topping
+
+                        OrderDetail toppingDetail = new OrderDetail();
+                        toppingDetail.setOrders(savedOrder);
+                        toppingDetail.setProduct(toppingProduct);
+                        toppingDetail.setParent(savedChildDetail); // Parent là ly trà sữa
+                        toppingDetail.setQuantity(toppingItem.getQuantity());
+                        toppingDetail.setSize(ProducSizeEnum.NONE);
+                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
+                        toppingDetail.setCombo(false);
+                        toppingDetail.setNote(toppingItem.getNote());
+                        orderDetailRepository.save(toppingDetail);
+
+                        // Topping có thể tính phí
+                        totalPrice += toppingProduct.getBasePrice() * toppingItem.getQuantity();
+                    }
                 }
-                isSuccessOrder = true;
 
             } else {
                 // Xử lý cho sản phẩm thông thường
@@ -104,6 +147,7 @@ public class OrderService {
                     case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
                     case "L" -> orderDetail.setUnitPrice(product.getBasePrice() + 5000);
                     case "S" -> orderDetail.setUnitPrice(product.getBasePrice() - 5000);
+                    case "XL" -> orderDetail.setUnitPrice(product.getBasePrice() + 10000);
                 }
 
                 orderDetail.setProduct(product);
@@ -121,7 +165,8 @@ public class OrderService {
                     OrderDetail childOrderDetail = new OrderDetail();
                     childOrderDetail.setQuantity(childItem.getQuantity());
                     childOrderDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
-                    Product childProduct = productRepository.findById(childItem.getProductId()).orElseThrow(() -> new RuntimeException("Product not found"));
+                    Product childProduct = productRepository.findById(childItem.getProductId()).orElseThrow(()
+                            -> new RuntimeException("Product not found"));
 
                     childOrderDetail.setUnitPrice(childProduct.getBasePrice());
 
@@ -134,7 +179,6 @@ public class OrderService {
                     // Tính tổng giá trị đơn hàng
                     totalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
                 }
-                isSuccessOrder = true;
             }
         }
         // Cập nhật tổng giá trị đơn hàng
@@ -143,11 +187,80 @@ public class OrderService {
     }
 
 
-    public List<OrderDetail> getOrderDetails(Long orderId) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrdersId(orderId);
-        if (orderDetails.isEmpty()) {
-            throw new NotFoundException("Order details not found");
+    public PagingResponse<OrderResponse> getAllOrders(Double minPrice,
+                                                      Double maxPrice,
+                                                      String status,
+                                                      String staffName,
+                                                      Pageable pageable) {
+        Specification<Orders> spec = Specification.where(OrderSpecification.priceBetween(minPrice, maxPrice))
+                .and(OrderSpecification.staffNameContains(staffName));
+        if (status != null && !status.isEmpty()) {
+            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status)));
+        } else {
+            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.PENDING));
+            spec = spec.or(OrderSpecification.orderStatus(OrderStatusEnum.CONFIRMED));
+            spec = spec.or(OrderSpecification.orderStatus(OrderStatusEnum.CANCELLED));
         }
-        return orderDetails;
+        Page<Orders> orderPage = orderRepository.findAll(spec, pageable);
+        List<OrderResponse> orderResponses = orderPage.getContent()
+                .stream()
+                .map(this::convertToOrderResponse).toList();
+        PagingResponse<OrderResponse> response = new PagingResponse<>();
+        response.setData(orderResponses);
+        response.setPage(orderPage.getNumber());
+        response.setSize(orderPage.getSize());
+        response.setTotalElements(orderPage.getTotalElements());
+        response.setTotalPages(orderPage.getTotalPages());
+        response.setLast(orderPage.isLast());
+        return response;
     }
+
+    private OrderResponse convertToOrderResponse(Orders order) {
+        OrderResponse orderResponse = modelMapper.map(order, OrderResponse.class);
+        if (order.getUser() != null) {
+            orderResponse.setUserId(order.getUser().getId());
+            orderResponse.setUserName(order.getUser().getFullName());
+        }
+        return orderResponse;
+    }
+
+    public List<OrderDetailResponse> buildOrderDetailTree(List<OrderDetail> orderDetails) {
+        Map<Long, OrderDetailResponse> map = new LinkedHashMap<>();
+        List<OrderDetailResponse> roots = new ArrayList<>();
+
+        // Bước 1: Đổi từng OrderDetail thành DTO
+        for (OrderDetail detail : orderDetails) {
+            OrderDetailResponse dto = new OrderDetailResponse();
+            dto.setId(detail.getId());
+            dto.setProductName(detail.getProduct().getName());
+            dto.setQuantity(detail.getQuantity());
+            dto.setUnitPrice(detail.getUnitPrice());
+            dto.setSize(detail.getSize().toString());
+            dto.setNote(detail.getNote());
+            dto.setCombo(detail.isCombo());
+
+            map.put(detail.getId(), dto);
+
+            // Nếu không có parent -> là root
+            if (detail.getParent() == null) {
+                roots.add(dto);
+            }
+        }
+
+        // Bước 2: Gán child vào parent
+        for (OrderDetail detail : orderDetails) {
+            if (detail.getParent() != null) {
+                OrderDetailResponse parentDto = map.get(detail.getParent().getId());
+                OrderDetailResponse childDto = map.get(detail.getId());
+                parentDto.getChildItems().add(childDto);
+            }
+        }
+        return roots;
+    }
+
+    public List<OrderDetailResponse> getOrderDetails(Long orderId) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrdersOrderByParentIdAscIdAsc(orderId);
+        return buildOrderDetailTree(orderDetails);
+    }
+
 }

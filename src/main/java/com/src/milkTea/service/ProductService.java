@@ -97,8 +97,8 @@ public class ProductService {
 
     public ProductResponse updateProduct(Long productId, ProductRequest productRequest) {
         // Check if the product exists
-        Product existingProduct = productRepository.findById(productId).orElseThrow(() -> new NotFoundException("Product not found"));
-
+        Product existingProduct = productRepository.findById(productId).orElseThrow(()
+                -> new NotFoundException("Product not found"));
         // Check duplicate name and product code
         List<String> duplicates = new ArrayList<>();
         if (productRepository.existsByNameAndIdNot(productRequest.getName(), productId)) {
@@ -346,7 +346,7 @@ public class ProductService {
         if (comboDetails.isEmpty()) {
             throw new NotFoundException("Combo details not found");
         }
-       // Map product to ComboResponseV2
+        // Map product to ComboResponseV2
         ComboItemResponseV2 comboItemResponseV2 = getComboItemResponseV2(comboProduct);
 
         // Convert ComboDetail to ComboItemResponse.Item

@@ -1,5 +1,6 @@
 package com.src.milkTea.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.src.milkTea.enums.ProducSizeEnum;
 import jakarta.persistence.*;
@@ -32,10 +33,13 @@ public class OrderDetail {
 
     private String note;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime createAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime updateAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime deleteAt;
 
     // Join with Orders
