@@ -142,6 +142,9 @@ public class OrderService {
                 orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
                 Product product = productRepository.findById(item.getProductId()).orElseThrow(()
                         -> new NotFoundException("Product not found"));
+                if(product.getProductType() == ProductTypeEnum.COMBO) {
+                    throw new ProductException("Product is not a SINGLE product");
+                } // Không cho combo như là 1 sản phẩm SINGLE
 
                 switch (item.getSize()) {
                     case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
