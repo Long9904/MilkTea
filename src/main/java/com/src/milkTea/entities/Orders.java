@@ -45,6 +45,11 @@ public class Orders {
     @JsonIgnore
     private List<OrderDetail> orderDetails;
 
+    // Join column for the relationship with Payment
+    @OneToOne(mappedBy = "order")
+    @JsonIgnore
+    private Payment payment;
+
     @PrePersist
     public void prePersist() {
         createAt = LocalDateTime.now();

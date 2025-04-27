@@ -1,5 +1,6 @@
 package com.src.milkTea.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.src.milkTea.enums.PaymentMethodEnum;
 import com.src.milkTea.enums.TransactionEnum;
 import jakarta.persistence.*;
@@ -19,7 +20,11 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String orderId;
+    @OneToOne
+    @JoinColumn(name = "order_id", referencedColumnName = "id")
+    @JsonIgnore
+    private Orders order; // order id from Orders table
+
     private String requestId; // request id from Momo, null if not yet paid or payment method is not Momo
     private String amount;
 
@@ -28,6 +33,7 @@ public class Payment {
 
     private String message; // response message from Momo or other payment methods
 
+    @Enumerated(EnumType.STRING)
     private PaymentMethodEnum paymentMethod; // momo, cash, bank transfer, etc.
 
     private LocalDateTime createdAt;
