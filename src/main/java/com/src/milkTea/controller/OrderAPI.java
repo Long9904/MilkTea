@@ -40,4 +40,12 @@ public class OrderAPI {
     public ResponseEntity<?> getOrderDetails(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderDetails(id));
     }
+
+    // Update order status
+    @Operation(summary = "Update order status")
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+        orderService.updateOrderStatus(id, status);
+        return ResponseEntity.ok("Order status updated successfully");
+    }
 }

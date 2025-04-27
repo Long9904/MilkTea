@@ -263,4 +263,19 @@ public class OrderService {
         return buildOrderDetailTree(orderDetails);
     }
 
+    public void updateOrderStatus(Long id, String status) {
+        Orders order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status);
+        if (orderStatus == OrderStatusEnum.CANCELLED) {
+            order.setStatus(OrderStatusEnum.CANCELLED);
+        } else if (orderStatus == OrderStatusEnum.CONFIRMED) {
+            order.setStatus(OrderStatusEnum.CONFIRMED);
+        } else if (orderStatus == OrderStatusEnum.PAID) {
+            order.setStatus(OrderStatusEnum.PAID);
+        } else {
+            throw new ProductException("Invalid order status");
+        }
+        orderRepository.save(order);
+    }
 }
