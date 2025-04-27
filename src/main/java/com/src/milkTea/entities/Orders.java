@@ -46,7 +46,7 @@ public class Orders {
     private List<OrderDetail> orderDetails;
 
     // Join column for the relationship with Payment
-    @OneToOne(mappedBy = "order")
+    @OneToOne(mappedBy = "order",cascade = CascadeType.ALL)
     @JsonIgnore
     private Payment payment;
 
