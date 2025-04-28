@@ -2,9 +2,6 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
-import com.src.milkTea.dto.response.OrderDetailResponse;
-import com.src.milkTea.dto.response.OrderResponse;
-import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.OrderDetail;
 import com.src.milkTea.entities.Orders;
 import com.src.milkTea.entities.Product;
@@ -18,22 +15,13 @@ import com.src.milkTea.repository.ComboDetailRepository;
 import com.src.milkTea.repository.OrderDetailRepository;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.ProductRepository;
-import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 @Service
-public class OrderService {
+public class OrderServiceV2 {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
@@ -52,7 +40,6 @@ public class OrderService {
 
     @Autowired
     private ModelMapper modelMapper;
-
 
     public Orders addItemToCart(OrderRequest orderRequest) {
 
@@ -196,92 +183,175 @@ public class OrderService {
         return orderRepository.save(savedOrder);
     }
 
-
-    public PagingResponse<OrderResponse> getAllOrders(Double minPrice,
-                                                      Double maxPrice,
-                                                      String status,
-                                                      String staffName,
-                                                      Pageable pageable) {
-        Specification<Orders> spec = Specification.where(OrderSpecification.priceBetween(minPrice, maxPrice))
-                .and(OrderSpecification.staffNameContains(staffName));
-        if (status != null && !status.isEmpty()) {
-            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status.toUpperCase())));
-        }
-        Page<Orders> orderPage = orderRepository.findAll(spec, pageable);
-        List<OrderResponse> orderResponses = orderPage.getContent()
-                .stream()
-                .map(this::convertToOrderResponse).toList();
-        PagingResponse<OrderResponse> response = new PagingResponse<>();
-        response.setData(orderResponses);
-        response.setPage(orderPage.getNumber());
-        response.setSize(orderPage.getSize());
-        response.setTotalElements(orderPage.getTotalElements());
-        response.setTotalPages(orderPage.getTotalPages());
-        response.setLast(orderPage.isLast());
-        return response;
-    }
-
-    private OrderResponse convertToOrderResponse(Orders order) {
-        OrderResponse orderResponse = modelMapper.map(order, OrderResponse.class);
-        if (order.getUser() != null) {
-            orderResponse.setUserId(order.getUser().getId());
-            orderResponse.setUserName(order.getUser().getFullName());
-        }
-        return orderResponse;
-    }
-
-    public List<OrderDetailResponse> buildOrderDetailTree(List<OrderDetail> orderDetails) {
-        Map<Long, OrderDetailResponse> map = new LinkedHashMap<>();
-        List<OrderDetailResponse> roots = new ArrayList<>();
-
-        // Bước 1: Đổi từng OrderDetail thành DTO
-        for (OrderDetail detail : orderDetails) {
-            OrderDetailResponse dto = new OrderDetailResponse();
-            dto.setId(detail.getId());
-            dto.setProductName(detail.getProduct().getName());
-            dto.setQuantity(detail.getQuantity());
-            dto.setUnitPrice(detail.getUnitPrice());
-            dto.setSize(detail.getSize().toString());
-            dto.setNote(detail.getNote());
-            dto.setCombo(detail.isCombo());
-
-            map.put(detail.getId(), dto);
-
-            // Nếu không có parent -> là root
-            if (detail.getParent() == null) {
-                roots.add(dto);
-            }
-        }
-
-        // Bước 2: Gán child vào parent
-        for (OrderDetail detail : orderDetails) {
-            if (detail.getParent() != null) {
-                OrderDetailResponse parentDto = map.get(detail.getParent().getId());
-                OrderDetailResponse childDto = map.get(detail.getId());
-                parentDto.getChildItems().add(childDto);
-            }
-        }
-        return roots;
-    }
-
-    public List<OrderDetailResponse> getOrderDetails(Long orderId) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrdersOrderByParentIdAscIdAsc(orderId);
-        return buildOrderDetailTree(orderDetails);
-    }
-
-    public void updateOrderStatus(Long id, String status) {
-        Orders order = orderRepository.findById(id)
+    public Orders addItemToExistingOrder(Long orderId, OrderRequest orderRequest) {
+        Orders existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status);
-        if (orderStatus == OrderStatusEnum.CANCELLED) {
-            order.setStatus(OrderStatusEnum.CANCELLED);
-        } else if (orderStatus == OrderStatusEnum.CONFIRMED) {
-            order.setStatus(OrderStatusEnum.CONFIRMED);
-        } else if (orderStatus == OrderStatusEnum.PAID) {
-            order.setStatus(OrderStatusEnum.PAID);
-        } else {
-            throw new ProductException("Invalid order status");
+
+        // Only allow adding items to PENDING orders
+        if (existingOrder.getStatus() != OrderStatusEnum.PENDING) {
+            throw new ProductException("Can only add items to orders in PENDING status");
         }
+
+        double totalPrice = existingOrder.getTotalPrice();
+
+        // Save order details
+        for (OrderItemRequest item : orderRequest.getParentItems()) {
+            if (item.isCombo()) {
+                Product comboProduct = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new NotFoundException("Combo product not found"));
+
+                if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
+                    throw new ProductException("Product is not a combo");
+                }
+
+                // Create parent OrderDetail for combo
+                OrderDetail comboDetail = new OrderDetail();
+                comboDetail.setOrders(existingOrder);
+                comboDetail.setProduct(comboProduct);
+                comboDetail.setQuantity(item.getQuantity());
+                comboDetail.setSize(ProducSizeEnum.NONE);
+                comboDetail.setUnitPrice(comboProduct.getBasePrice());
+                comboDetail.setCombo(true);
+                comboDetail.setNote(item.getNote());
+                OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
+
+                totalPrice += comboProduct.getBasePrice() * item.getQuantity();
+
+                // Handle child items in combo (milk tea cups in combo)
+                for (OrderItemRequest childItem : item.getChildItems()) {
+                    Product childProduct = productRepository.findById(childItem.getProductId())
+                            .orElseThrow(() -> new NotFoundException("Child product not found"));
+
+                    if (childProduct.getProductType() == ProductTypeEnum.COMBO) {
+                        throw new ProductException("Product is not a SINGLE product");
+                    }
+
+                    OrderDetail childDetail = new OrderDetail();
+                    childDetail.setOrders(existingOrder);
+                    childDetail.setProduct(childProduct);
+                    childDetail.setParent(savedComboDetail);
+                    childDetail.setQuantity(childItem.getQuantity());
+                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+                    childDetail.setUnitPrice(0);
+                    childDetail.setCombo(false);
+                    childDetail.setNote(childItem.getNote());
+                    OrderDetail savedChildDetail = orderDetailRepository.save(childDetail);
+
+                    // Handle toppings if any
+                    for (OrderItemRequest toppingItem : childItem.getChildItems()) {
+                        Product toppingProduct = productRepository.findById(toppingItem.getProductId())
+                                .orElseThrow(() -> new NotFoundException("Topping product not found"));
+
+                        if (toppingProduct.getProductType() == ProductTypeEnum.COMBO) {
+                            throw new ProductException("Product is not a SINGLE product");
+                        }
+                        if (toppingProduct.getProductUsage() == ProductUsageEnum.MAIN) {
+                            throw new ProductException("Product is not a EXTRA product");
+                        }
+
+                        OrderDetail toppingDetail = new OrderDetail();
+                        toppingDetail.setOrders(existingOrder);
+                        toppingDetail.setProduct(toppingProduct);
+                        toppingDetail.setParent(savedChildDetail);
+                        toppingDetail.setQuantity(toppingItem.getQuantity());
+                        toppingDetail.setSize(ProducSizeEnum.NONE);
+                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
+                        toppingDetail.setCombo(false);
+                        toppingDetail.setNote(toppingItem.getNote());
+                        orderDetailRepository.save(toppingDetail);
+
+                        totalPrice += toppingProduct.getBasePrice() * toppingItem.getQuantity();
+                    }
+                }
+            } else {
+                // Handle regular products
+                OrderDetail orderDetail = new OrderDetail();
+                orderDetail.setQuantity(item.getQuantity());
+                orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
+                Product product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new NotFoundException("Product not found"));
+
+                if(product.getProductType() == ProductTypeEnum.COMBO) {
+                    throw new ProductException("Product is not a SINGLE product");
+                }
+
+                switch (item.getSize()) {
+                    case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
+                    case "L" -> orderDetail.setUnitPrice(product.getBasePrice() + 5000);
+                    case "S" -> orderDetail.setUnitPrice(product.getBasePrice() - 5000);
+                    case "XL" -> orderDetail.setUnitPrice(product.getBasePrice() + 10000);
+                }
+
+                orderDetail.setProduct(product);
+                orderDetail.setOrders(existingOrder);
+                orderDetail.setCombo(false);
+
+                OrderDetail savedOrderDetail = orderDetailRepository.save(orderDetail);
+
+                totalPrice += orderDetail.getUnitPrice() * orderDetail.getQuantity();
+
+                // Handle child products (if any)
+                for (OrderItemRequest childItem : item.getChildItems()) {
+                    OrderDetail childOrderDetail = new OrderDetail();
+                    childOrderDetail.setQuantity(childItem.getQuantity());
+                    childOrderDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+                    Product childProduct = productRepository.findById(childItem.getProductId())
+                            .orElseThrow(() -> new NotFoundException("Product not found"));
+
+                    if (childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
+                        throw new ProductException("Product is not a EXTRA product");
+                    }
+
+                    childOrderDetail.setUnitPrice(childProduct.getBasePrice());
+                    childOrderDetail.setProduct(childProduct);
+                    childOrderDetail.setOrders(existingOrder);
+                    childOrderDetail.setParent(savedOrderDetail);
+                    childOrderDetail.setCombo(false);
+                    orderDetailRepository.save(childOrderDetail);
+
+                    totalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
+                }
+            }
+        }
+
+        existingOrder.setTotalPrice(totalPrice);
+        return orderRepository.save(existingOrder);
+    }
+
+
+    public void deleteOrderDetail(Long orderId, Long orderDetailId) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        // Only allow modifying PENDING orders
+        if (order.getStatus() != OrderStatusEnum.PENDING) {
+            throw new ProductException("Can only modify orders in PENDING status");
+        }
+
+        OrderDetail orderDetail = orderDetailRepository.findById(orderDetailId)
+                .orElseThrow(() -> new NotFoundException("Order detail not found"));
+
+        // Verify the order detail belongs to the specified order
+        if (!orderDetail.getOrders().getId().equals(orderId)) {
+            throw new ProductException("Order detail does not belong to the specified order");
+        }
+
+        // If this is a parent item (combo or main product with toppings)
+        if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
+            // Delete all child items first
+            orderDetail.getChildren().forEach(child -> orderDetailRepository.delete(child));
+        }
+
+        // If this is a child item, just delete it
+        orderDetailRepository.delete(orderDetail);
+
+        // Recalculate total price
+        double newTotalPrice = order.getOrderDetails().stream()
+                .filter(detail -> !detail.getId().equals(orderDetailId)) // Exclude deleted item
+                .mapToDouble(detail -> detail.getUnitPrice() * detail.getQuantity())
+                .sum();
+
+        order.setTotalPrice(newTotalPrice);
         orderRepository.save(order);
     }
 }
