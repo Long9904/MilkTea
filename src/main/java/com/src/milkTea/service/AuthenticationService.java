@@ -9,6 +9,7 @@ import com.src.milkTea.enums.UserRoleEnum;
 import com.src.milkTea.enums.UserStatusEnum;
 import com.src.milkTea.exception.AuthenticationException;
 import com.src.milkTea.exception.DuplicateException;
+import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.repository.AuthenticationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,6 @@ public class AuthenticationService implements UserDetailsService {
     private TokenService tokenService;
 
 
-
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return authenticationRepository.findUserByEmail(email)
@@ -65,7 +65,7 @@ public class AuthenticationService implements UserDetailsService {
         if (authenticationRepository.existsByPhoneNumber(registerRequest.getPhoneNumber())) {
             duplicateEntries.add("Phone number");
         }
-        if(!duplicateEntries.isEmpty()) {
+        if (!duplicateEntries.isEmpty()) {
             throw new DuplicateException(duplicateEntries);
         }
 
@@ -74,7 +74,7 @@ public class AuthenticationService implements UserDetailsService {
         modelMapper.map(registerRequest, user);
         user.setPassword(passwordEncoder.encode((registerRequest.getPassword())));
         // Set Role
-        if(registerRequest.getRole().equalsIgnoreCase("Manager")) {
+        if (registerRequest.getRole().equalsIgnoreCase("Manager")) {
             user.setRole(UserRoleEnum.MANAGER);
         } else if (registerRequest.getRole().equalsIgnoreCase("Staff")) {
             user.setRole(UserRoleEnum.STAFF);
@@ -104,7 +104,7 @@ public class AuthenticationService implements UserDetailsService {
             User user = authenticationRepository.findUserByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
 
-            if(user.getStatus().equals(UserStatusEnum.INACTIVE)){
+            if (user.getStatus().equals(UserStatusEnum.INACTIVE)) {
                 throw new AuthenticationException("Account is INACTIVE");
             }// User is not active
 
@@ -117,12 +117,24 @@ public class AuthenticationService implements UserDetailsService {
             loginResponse.setAccessToken(token);
             loginResponse.setRole(user.getRole());
             return loginResponse;
-        }
-        catch (AuthenticationException e) {
+        } catch (AuthenticationException e) {
             throw e;
         } catch (Exception e) {
             throw new AuthenticationException("Invalid username or password");
         }
 
+    }
+
+    public String forgotPassword(String email, String newPassword) {
+        /*
+            1. Check email
+            2. Return password
+         */
+        User user = authenticationRepository.findUserByEmail(email)
+                .orElseThrow(() -> new NotFoundException("Email not found"));
+
+            user.setPassword(passwordEncoder.encode(newPassword));
+            authenticationRepository.save(user);
+            return "Password changed successfully";
     }
 }
