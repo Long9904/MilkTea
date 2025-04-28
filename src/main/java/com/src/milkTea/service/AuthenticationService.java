@@ -108,6 +108,10 @@ public class AuthenticationService implements UserDetailsService {
                 throw new AuthenticationException("Account is INACTIVE");
             }// User is not active
 
+            if (user.getStatus().equals(UserStatusEnum.DELETED)) {
+                throw new AuthenticationException("Account is DELETED");
+            }// User is not active
+
             // Generate JWT token
             String token = tokenService.generateAccessToken(user);
             LoginResponse loginResponse = new LoginResponse();

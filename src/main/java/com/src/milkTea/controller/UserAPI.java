@@ -49,4 +49,12 @@ public class UserAPI {
         return ResponseEntity.ok(userDTO);
     }
 
+    //Update user status
+    @DeleteMapping("/{id}/status")
+    public ResponseEntity<?> updateUserStatus(@PathVariable Long id, String status) {
+
+        userService.updateUserStatus(id, status);
+        return ResponseEntity.ok("User status updated successfully");
+    }
+
 }

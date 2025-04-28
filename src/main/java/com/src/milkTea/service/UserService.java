@@ -119,4 +119,20 @@ public class UserService {
         // Convert the user entity to a UserDTO
         return modelMapper.map(user, UserDTO.class);
     }
+
+    public void updateUserStatus(Long id, String status) {
+        // Check if user exists
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Check if status is valid
+        if (!status.equalsIgnoreCase("ACTIVE") && !status.equalsIgnoreCase("DELETED")) {
+            throw new StatusException("Invalid status");
+        }
+
+        // Update user status
+        user.setStatus(UserStatusEnum.valueOf(status.toUpperCase()));
+        user.setUpdateAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
 }
