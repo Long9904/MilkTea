@@ -22,8 +22,7 @@ public class ComboItemRequest {
         @Min(value = 1, message = "Quantity must be at least 1")
         private int quantity;
 
-        @Null(message = "Size can be null or one of S, M, or L")
-        @Pattern(regexp = "^[SML]$", message = "Size must be one of S, M, or L")
+        @Pattern(regexp = "^(S|M|L|XL|NONE)$", message = "Size must be one of S, M, L, XL, NONE")
         private String size;
     }
 }
