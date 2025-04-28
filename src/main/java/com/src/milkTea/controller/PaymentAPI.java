@@ -27,17 +27,56 @@ public class PaymentAPI {
         return ResponseEntity.ok(result);
     }
 
-    @Operation (summary = "Momo payment success callback")
+    @Operation(summary = "Momo payment success callback")
     @GetMapping("/success")
-    public String paymentSuccess() {
-        return "Thanh toán thành công";
+    public String paymentSuccess(@RequestParam Map<String, String> params) {
+        // Xây dựng URL redirect với các tham số từ MOMO
+        String baseUrl = "https://swp-3-w.vercel.app"; // URL của frontend
+        StringBuilder redirectUrl = new StringBuilder(baseUrl + "/staff/cart?");
+        
+        // Thêm các tham số quan trọng vào URL
+        redirectUrl.append("status=").append("success");
+        
+        if (params.containsKey("orderId")) {
+            redirectUrl.append("&orderId=").append(params.get("orderId"));
+        }
+        if (params.containsKey("amount")) {
+            redirectUrl.append("&amount=").append(params.get("amount"));
+        }
+        if (params.containsKey("transId")) {
+            redirectUrl.append("&transId=").append(params.get("transId"));
+        }
+        if (params.containsKey("message")) {
+            redirectUrl.append("&message=").append(params.get("message"));
+        }
+        if (params.containsKey("resultCode")) {
+            redirectUrl.append("&resultCode=").append(params.get("resultCode"));
+        }
+
+        // Script chuyển hướng
+        StringBuilder htmlContent = new StringBuilder();
+        htmlContent.append("<!DOCTYPE html>")
+                .append("<html>")
+                .append("<head>")
+                .append("<meta charset='UTF-8'>")
+                .append("<title>Redirecting...</title>")
+                .append("<script>")
+                .append("window.location.href = '").append(redirectUrl).append("';")
+                .append("</script>")
+                .append("</head>")
+                .append("<body>")
+                .append("<p>Đang chuyển hướng...</p>")
+                .append("</body>")
+                .append("</html>");
+
+        return htmlContent.toString();
     }
+
 
     // Momo payment success callback
     @Operation (summary = "Momo payment status callback")
     @PostMapping("/momo/ipn")
     public ResponseEntity<String> momoNotify(@RequestBody MomoIPNRequest request) {
-        System.out.println("IPN received: " + request);
         paymentService.processMomoIPN(request);
         return ResponseEntity.ok("IPN received");
     }
