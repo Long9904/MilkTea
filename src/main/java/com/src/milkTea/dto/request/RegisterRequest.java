@@ -48,7 +48,7 @@ public class RegisterRequest {
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
-    @Schema(description = "Staff|Manager", example = "Staff")
-    @Pattern(regexp = "^(Staff|Manager)$", message = "Manager or Staff")
+    @Schema(description = "STAFF|MANAGER", example = "Staff")
+    @Pattern(regexp = "^(STAFF|MANAGER)$", message = "Manager or Staff")
     private String role;
 }
