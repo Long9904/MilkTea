@@ -63,4 +63,14 @@ public class OrderDetail {
     // Self join - Danh sách con (món thuộc combo)
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderDetail> children = new ArrayList<>(); // 1 cha có thể có nhiều con
+
+    @PrePersist
+    public void prePersist() {
+        createAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updateAt = LocalDateTime.now();
+    }
 }
