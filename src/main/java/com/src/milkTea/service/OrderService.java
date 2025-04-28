@@ -207,11 +207,7 @@ public class OrderService {
         Specification<Orders> spec = Specification.where(OrderSpecification.priceBetween(minPrice, maxPrice))
                 .and(OrderSpecification.staffNameContains(staffName));
         if (status != null && !status.isEmpty()) {
-            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status)));
-        } else {
-            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.PENDING));
-            spec = spec.or(OrderSpecification.orderStatus(OrderStatusEnum.CONFIRMED));
-            spec = spec.or(OrderSpecification.orderStatus(OrderStatusEnum.CANCELLED));
+            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status.toUpperCase())));
         }
         Page<Orders> orderPage = orderRepository.findAll(spec, pageable);
         List<OrderResponse> orderResponses = orderPage.getContent()
