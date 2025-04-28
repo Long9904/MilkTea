@@ -92,7 +92,7 @@ public class ProductAPI {
     }
 
     @Operation(summary = "Post combo with detail - version 2")
-    @PostMapping("v2/{comboId}/combo")
+    @PutMapping("v2/{comboId}/combo")
     public ResponseEntity<?> updateComboV2(@PathVariable Long comboId,
                                            @Valid @RequestBody ComboItemRequestV2 comboItemRequestV2) {
 
@@ -110,5 +110,12 @@ public class ProductAPI {
     @PostMapping("v2")
     public ResponseEntity<?> createComboV2(@Valid @RequestBody ComboItemRequestV2 comboItemRequestV2) {
         return ResponseEntity.ok(productService.createComboWithDetail(comboItemRequestV2));
+    }
+
+    // Update product status
+    @DeleteMapping( "/{id}/status")
+    public ResponseEntity<?> updateProductStatus(@PathVariable Long id, @RequestParam String status) {
+        productService.updateProductStatus(id, status);
+        return ResponseEntity.ok("Update product status success");
     }
 }

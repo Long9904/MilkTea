@@ -403,4 +403,20 @@ public class ProductService {
                 -> new NotFoundException("Product not found"));
         return getComboItemResponseV2(product);
     }
+
+    public void updateProductStatus(Long id, String status) {
+        // Check if the product exists
+        Product existingProduct = productRepository.findById(id).orElseThrow(()
+                -> new NotFoundException("Product not found"));
+        // Check if the status is valid
+        if (status.equalsIgnoreCase(ProductStatusEnum.ACTIVE.name())) {
+            existingProduct.setStatus(ProductStatusEnum.ACTIVE);
+        } else if (status.equalsIgnoreCase(ProductStatusEnum.DELETED.name())) {
+            existingProduct.setStatus(ProductStatusEnum.DELETED);
+        } else {
+            throw new StatusException("Status must be ACTIVE or DELETED");
+        }
+        // Update the product
+        productRepository.save(existingProduct);
+    }
 }
