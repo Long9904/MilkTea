@@ -321,37 +321,77 @@ public class OrderServiceV2 {
 
     public void deleteOrderDetail(Long orderId, Long orderDetailId) {
         Orders order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
 
-        // Only allow modifying PENDING orders
+        // Chỉ cho phép sửa đơn hàng ở trạng thái PENDING
         if (order.getStatus() != OrderStatusEnum.PENDING) {
-            throw new ProductException("Can only modify orders in PENDING status");
+            throw new ProductException("Chỉ có thể sửa đơn hàng ở trạng thái chờ");
         }
 
         OrderDetail orderDetail = orderDetailRepository.findById(orderDetailId)
-                .orElseThrow(() -> new NotFoundException("Order detail not found"));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy chi tiết đơn hàng"));
 
-        // Verify the order detail belongs to the specified order
+        // Kiểm tra xem chi tiết đơn hàng có thuộc về đơn hàng không
         if (!orderDetail.getOrders().getId().equals(orderId)) {
-            throw new ProductException("Order detail does not belong to the specified order");
+            throw new ProductException("Chi tiết đơn hàng không thuộc về đơn hàng này");
         }
 
-        // If this is a parent item (combo or main product with toppings)
-        if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
-            // Delete all child items first
-            orderDetail.getChildren().forEach(child -> orderDetailRepository.delete(child));
+        double priceToSubtract = 0;
+
+        // Nếu là combo
+        if (orderDetail.isCombo()) {
+            // Tính giá của combo
+            priceToSubtract += orderDetail.getUnitPrice() * orderDetail.getQuantity();
+            
+            // Xử lý các sản phẩm con trong combo
+            if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
+                for (OrderDetail child : orderDetail.getChildren()) {
+                    // Xử lý các topping của từng sản phẩm con
+                    if (child.getChildren() != null && !child.getChildren().isEmpty()) {
+                        for (OrderDetail topping : child.getChildren()) {
+                            priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
+                            orderDetailRepository.delete(topping);
+                        }
+                    }
+                    orderDetailRepository.delete(child);
+                }
+            }
+            orderDetailRepository.delete(orderDetail);
+        }
+        // Nếu là sản phẩm đơn với topping
+        else if (orderDetail.getParent() == null) {
+            // Tính giá sản phẩm chính
+            priceToSubtract += orderDetail.getUnitPrice() * orderDetail.getQuantity();
+            
+            // Xử lý các topping
+            if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
+                for (OrderDetail topping : orderDetail.getChildren()) {
+                    priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
+                    orderDetailRepository.delete(topping);
+                }
+            }
+            orderDetailRepository.delete(orderDetail);
+        }
+        // Nếu là topping hoặc sản phẩm con trong combo
+        else {
+            // Nếu là topping, chỉ cần xóa nó và tính giá của nó
+            if (orderDetail.getParent() != null && !orderDetail.getParent().isCombo()) {
+                priceToSubtract = orderDetail.getUnitPrice() * orderDetail.getQuantity();
+            }
+            // Nếu là sản phẩm con trong combo, xóa nó và các topping của nó
+            else {
+                if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
+                    for (OrderDetail topping : orderDetail.getChildren()) {
+                        priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
+                        orderDetailRepository.delete(topping);
+                    }
+                }
+            }
+            orderDetailRepository.delete(orderDetail);
         }
 
-        // If this is a child item, just delete it
-        orderDetailRepository.delete(orderDetail);
-
-        // Recalculate total price
-        double newTotalPrice = order.getOrderDetails().stream()
-                .filter(detail -> !detail.getId().equals(orderDetailId)) // Exclude deleted item
-                .mapToDouble(detail -> detail.getUnitPrice() * detail.getQuantity())
-                .sum();
-
-        order.setTotalPrice(newTotalPrice);
+        // Cập nhật tổng giá đơn hàng
+        order.setTotalPrice(order.getTotalPrice() - priceToSubtract);
         orderRepository.save(order);
     }
 }
