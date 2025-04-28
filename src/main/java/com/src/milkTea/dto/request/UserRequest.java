@@ -47,7 +47,7 @@ public class UserRequest {
     @Pattern(regexp = "^(STAFF|MANAGER)$", message = "Role must be 'STAFF' or 'MANAGER'")
     private String role;
 
-    @Pattern(regexp = "^(ACTIVE|DELETED)$", message = "Status must be 'ACTIVE' or 'DELETED'")
-    private String status;
+//    @Pattern(regexp = "^(ACTIVE|DELETED)$", message = "Status must be 'ACTIVE' or 'DELETED'")
+//    private String status;
 
 }
