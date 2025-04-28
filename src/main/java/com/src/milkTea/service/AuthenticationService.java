@@ -111,6 +111,8 @@ public class AuthenticationService implements UserDetailsService {
             // Generate JWT token
             String token = tokenService.generateAccessToken(user);
             LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setId(user.getId());
+            loginResponse.setFullName(user.getFullName());
             loginResponse.setEmail(user.getEmail());
             loginResponse.setAccessToken(token);
             loginResponse.setRole(user.getRole());
