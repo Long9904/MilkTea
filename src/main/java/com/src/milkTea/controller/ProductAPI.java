@@ -104,4 +104,11 @@ public class ProductAPI {
     public ResponseEntity<?> getProductByIdV2(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProductByIdV2(productId));
     }
+
+    // Create combo with detail - version 2
+    @Operation(summary = "Create combo with detail - version 2")
+    @PostMapping("v2")
+    public ResponseEntity<?> createComboV2(@Valid @RequestBody ComboItemRequestV2 comboItemRequestV2) {
+        return ResponseEntity.ok(productService.createComboWithDetail(comboItemRequestV2));
+    }
 }

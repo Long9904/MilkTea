@@ -21,6 +21,7 @@ import com.src.milkTea.repository.ComboDetailRepository;
 import com.src.milkTea.repository.ProductRepository;
 import com.src.milkTea.specification.ProductSpecification;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -381,5 +382,25 @@ public class ProductService {
         comboItemResponseV2.setUpdateAt(comboProduct.getUpdateAt());
         comboItemResponseV2.setDeleteAt(comboProduct.getDeleteAt());
         return comboItemResponseV2;
+    }
+
+    public ComboItemResponseV2 createComboWithDetail(@Valid ComboItemRequestV2 comboItemRequestV2) {
+        // 1. Tạo ProductRequest từ ComboItemRequestV2
+        ProductRequest productRequest = getProductRequest(comboItemRequestV2);
+
+        // 2. Gọi hàm tạo sản phẩm mới
+        ProductResponse productResponse = createProduct(productRequest);
+
+        // 3. Tạo ComboItemRequest từ ComboItemRequestV2
+        ComboItemRequest comboItemRequest = new ComboItemRequest();
+        comboItemRequest.setComboItems(comboItemRequestV2.getComboItems());
+
+        // 4. Gọi hàm cập nhật combo detail có sẵn
+        updateComboItem(productResponse.getId(), comboItemRequest);
+
+        // 5. Trả lại response từ hàm updateProduct
+        Product product = productRepository.findById(productResponse.getId()).orElseThrow(()
+                -> new NotFoundException("Product not found"));
+        return getComboItemResponseV2(product);
     }
 }
