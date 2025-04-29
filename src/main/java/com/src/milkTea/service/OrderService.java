@@ -7,17 +7,12 @@ import com.src.milkTea.dto.response.OrderResponse;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.entities.OrderDetail;
 import com.src.milkTea.entities.Orders;
+import com.src.milkTea.entities.Payment;
 import com.src.milkTea.entities.Product;
-import com.src.milkTea.enums.OrderStatusEnum;
-import com.src.milkTea.enums.ProducSizeEnum;
-import com.src.milkTea.enums.ProductTypeEnum;
-import com.src.milkTea.enums.ProductUsageEnum;
+import com.src.milkTea.enums.*;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.ProductException;
-import com.src.milkTea.repository.ComboDetailRepository;
-import com.src.milkTea.repository.OrderDetailRepository;
-import com.src.milkTea.repository.OrderRepository;
-import com.src.milkTea.repository.ProductRepository;
+import com.src.milkTea.repository.*;
 import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
 import org.modelmapper.ModelMapper;
@@ -27,10 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class OrderService {
@@ -53,6 +45,8 @@ public class OrderService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     public Orders addItemToCart(OrderRequest orderRequest) {
 
@@ -283,5 +277,16 @@ public class OrderService {
             throw new ProductException("Invalid order status");
         }
         orderRepository.save(order);
+        // Update payment too
+        Optional<Payment> payment = paymentRepository.findByOrderId(id);
+        if (payment.isPresent()) {
+            Payment paymentEntity = payment.get();
+            if (orderStatus == OrderStatusEnum.PAID) {
+                paymentEntity.setStatus(TransactionEnum.SUCCESS);
+            } else {
+                paymentEntity.setStatus(TransactionEnum.FAILED);
+            }
+            paymentRepository.save(paymentEntity);
+        }
     }
 }
