@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -36,8 +37,11 @@ public class UserService {
 
     public void softDeleteUser(Long id) {
         // Check if user is already deleted
-        User user = userRepository.findByIdAndStatus(id, UserStatusEnum.DELETED)
-                .orElseThrow(() -> new StatusException("User is already deleted"));
+        Optional<User> user = userRepository.findByIdAndStatus(id, UserStatusEnum.DELETED);
+
+        if (user.isPresent()) {
+            throw new NotFoundException("User already deleted");
+        }
 
         // Set user status to DELETED
         User deletedUser = userRepository.findByIdAndStatus(id, UserStatusEnum.ACTIVE)
