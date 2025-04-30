@@ -84,7 +84,7 @@ public class DashboardService {
         stats.put("top3MilkTeaAndComboProducts", top3MilkTeaProductsList);
 
         // Top 3 extra products by sales (productUsage = extra)
-        List<Object[]> top3ExtraProducts = productRepository.findTop3BestSellingProductByProductUsage(ProductUsageEnum.EXTRA);
+        List<Object[]> top3ExtraProducts = productRepository.findTop3ExtraProduct(ProductUsageEnum.EXTRA);
         List<Map<String, Object>> top3ExtraProductsList = new ArrayList<>();
         for (Object[] product : top3ExtraProducts) {
             Map<String, Object> productMap = new HashMap<>();
