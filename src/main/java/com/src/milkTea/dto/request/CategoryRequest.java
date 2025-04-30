@@ -17,7 +17,7 @@ public class CategoryRequest {
     @NotBlank(message = "Name cannot be blank")
     private String name;
 
-    @Size(min = 0 ,max = 255, message = "Address cannot exceed 255 characters")
+    @Size(min = 0 ,max = 255, message = "description cannot exceed 255 characters")
     private String description;
 
     @Pattern(regexp = "^(ACTIVE|DELETED)$", message = "ACTIVE or DELETED")
