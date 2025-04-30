@@ -51,5 +51,5 @@ public interface OrderRepository extends JpaRepository<Orders, Long>, JpaSpecifi
     List<Object[]> getRevenueByYear();
 
     @Query("SELECT sum(o.totalPrice) FROM Orders o WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID")
-    long totalMoneyAll(); // Tổng tiền của tất cả đơn hàng đã thanh toán
+    Long totalMoneyAll(); // Tổng tiền của tất cả đơn hàng đã thanh toán
 }

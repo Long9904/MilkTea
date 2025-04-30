@@ -58,7 +58,7 @@ public class DashboardService {
         Long allManagers = userRepository.countByRole(UserRoleEnum.MANAGER);
         stats.put("totalManager", allManagers);
 
-        // Top 3 products by sales
+        // Top 3 products by sales (name, quantity)
         List<Object[]> top3Products = productRepository.findTop3BestSellingProduct();
 
         // Convert the list of Object[] to a list of Map<String, Object>
@@ -95,8 +95,9 @@ public class DashboardService {
         stats.put("top3ExtraProducts", top3ExtraProductsList);
 
         // total revenue of all paid orders
-        long totalRevenue = orderRepository.totalMoneyAll();
-        stats.put("totalRevenue", totalRevenue);
+        Long result = orderRepository.totalMoneyAll();
+        long total = result != null ? result : 0L;
+        stats.put("totalRevenue", total);
 
         return stats;
     }
@@ -109,7 +110,10 @@ public class DashboardService {
             Map<String, Object> item = new HashMap<>();
             item.put("orderDate", row[0]);
             item.put("totalOrders", row[1]);
-            item.put("totalRevenue", row[2]);
+            Object totalRevenueRaw = row[2];
+            Long totalRevenue = totalRevenueRaw != null ? ((Number) totalRevenueRaw).longValue() : 0L;
+
+            item.put("totalRevenue", totalRevenue);
             results.add(item);
         }
         return results;
@@ -123,7 +127,10 @@ public class DashboardService {
             Map<String, Object> item = new HashMap<>();
             item.put("week", row[0]);
             item.put("totalOrders", row[1]);
-            item.put("totalRevenue", row[2]);
+            Object totalRevenueRaw = row[2];
+            Long totalRevenue = totalRevenueRaw != null ? ((Number) totalRevenueRaw).longValue() : 0L;
+
+            item.put("totalRevenue", totalRevenue);
             results.add(item);
         }
         return results;
@@ -137,7 +144,11 @@ public class DashboardService {
             Map<String, Object> item = new HashMap<>();
             item.put("month", row[0]);
             item.put("totalOrders", row[1]);
-            item.put("totalRevenue", row[2]);
+            // Xử lý null cho totalRevenue
+            Object totalRevenueRaw = row[2];
+            Long totalRevenue = totalRevenueRaw != null ? ((Number) totalRevenueRaw).longValue() : 0L;
+
+            item.put("totalRevenue", totalRevenue);
             results.add(item);
         }
         return results;
@@ -151,7 +162,11 @@ public class DashboardService {
             Map<String, Object> item = new HashMap<>();
             item.put("year", row[0]);
             item.put("totalOrders", row[1]);
-            item.put("totalRevenue", row[2]);
+            // Xử lý null cho totalRevenue
+            Object totalRevenueRaw = row[2];
+            Long totalRevenue = totalRevenueRaw != null ? ((Number) totalRevenueRaw).longValue() : 0L;
+
+            item.put("totalRevenue", totalRevenue);
             results.add(item);
         }
         return results;
