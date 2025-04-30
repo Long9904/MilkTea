@@ -55,4 +55,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "order by totalSold desc " +
             "limit 3")
     List<Object[]> findTop3BestSellingProductByProductUsage(ProductUsageEnum productUsageEnum);
+
+    @Query("select p.name, sum(od.quantity) as totalSold " +
+            "from OrderDetail od " +
+            "join od.product p " +
+            "where p.productUsage = :productUsageEnum " +
+            "group by p.id " +
+            "order by totalSold desc " +
+            "limit 3")
+    List<Object[]> findTop3ExtraProduct(ProductUsageEnum productUsageEnum);
 }
