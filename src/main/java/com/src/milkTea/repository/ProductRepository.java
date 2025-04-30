@@ -38,6 +38,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("select p.name, sum(od.quantity) as totalSold " +
             "from OrderDetail od " +
             "join od.product p " +
+            "where p.productUsage = 'MAIN' " +
+            "and od.parent is null " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
@@ -48,6 +50,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "from OrderDetail od " +
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
+            "and od.parent is null " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
