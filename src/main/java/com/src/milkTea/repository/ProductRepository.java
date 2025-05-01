@@ -35,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     long countByProductTypeAndProductUsage(ProductUsageEnum productUsage, ProductTypeEnum productType);
 
     // top 3 best-selling products (name, quantity)
-    @Query("select p.name, sum(od.quantity) as totalSold " +
+    @Query("select p.name, sum(od.quantity) as totalSold, p.imageUrl " +
             "from OrderDetail od " +
             "join od.product p " +
             "where p.productUsage = 'MAIN' " +
@@ -46,7 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Object[]> findTop3BestSellingProduct();
 
     // top 3 best-selling products by product usage (name, quantity)
-    @Query("select p.name, sum(od.quantity) as totalSold " +
+    @Query("select p.name, sum(od.quantity) as totalSold, p.imageUrl " +
             "from OrderDetail od " +
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
@@ -56,7 +56,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "limit 3")
     List<Object[]> findTop3BestSellingProductByProductUsage(ProductUsageEnum productUsageEnum);
 
-    @Query("select p.name, sum(od.quantity) as totalSold " +
+    @Query("select p.name, sum(od.quantity) as totalSold, p.imageUrl " +
             "from OrderDetail od " +
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
