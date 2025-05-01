@@ -190,12 +190,12 @@ public class OrderServiceV2 {
         Orders existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
 
-        // Chỉ cho phép thêm vào đơn hàng PENDING
         if (existingOrder.getStatus() != OrderStatusEnum.PENDING) {
             throw new ProductException("Chỉ có thể thêm vào đơn hàng ở trạng thái chờ");
         }
 
-        double totalPrice = existingOrder.getTotalPrice();
+        // Tính giá của các sản phẩm mới thêm vào
+        double additionalPrice = 0;  // Chỉ tính giá của sản phẩm mới
 
         // Lưu chi tiết đơn hàng
         for (OrderItemRequest item : orderRequest.getParentItems()) {
@@ -218,7 +218,7 @@ public class OrderServiceV2 {
                 comboDetail.setNote(item.getNote());
                 OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
 
-                totalPrice += comboProduct.getBasePrice() * item.getQuantity();
+                additionalPrice += comboProduct.getBasePrice() * item.getQuantity();
 
                 // Xử lý các sản phẩm con trong combo
                 for (OrderItemRequest childItem : item.getChildItems()) {
@@ -265,7 +265,7 @@ public class OrderServiceV2 {
                         toppingDetail.setNote(toppingItem.getNote());
                         orderDetailRepository.save(toppingDetail);
 
-                        totalPrice += toppingProduct.getBasePrice() * toppingDetail.getQuantity();
+                        additionalPrice += toppingProduct.getBasePrice() * toppingDetail.getQuantity();
                     }
                 }
             } else {
@@ -293,7 +293,7 @@ public class OrderServiceV2 {
 
                 OrderDetail savedOrderDetail = orderDetailRepository.save(orderDetail);
 
-                totalPrice += orderDetail.getUnitPrice() * orderDetail.getQuantity();
+                additionalPrice += orderDetail.getUnitPrice() * orderDetail.getQuantity();
 
                 // Xử lý topping
                 for (OrderItemRequest childItem : item.getChildItems()) {
@@ -315,12 +315,13 @@ public class OrderServiceV2 {
                     childOrderDetail.setCombo(false);
                     orderDetailRepository.save(childOrderDetail);
 
-                    totalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
+                    additionalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
                 }
             }
         }
 
-        existingOrder.setTotalPrice(totalPrice);
+        // Cuối cùng mới cộng giá mới vào tổng giá cũ
+        existingOrder.setTotalPrice(existingOrder.getTotalPrice() + additionalPrice);
         return orderRepository.save(existingOrder);
     }
 
@@ -344,18 +345,15 @@ public class OrderServiceV2 {
 
         double priceToSubtract = 0;
 
-        // Nếu là combo
+        // Trường hợp 1: Xóa combo
         if (orderDetail.isCombo()) {
-            // Tính giá của combo
             priceToSubtract += orderDetail.getUnitPrice() * orderDetail.getQuantity();
             
-            // Xử lý các sản phẩm con trong combo
-            if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
+            // Xóa theo thứ tự: topping -> sản phẩm con -> combo
+            if (orderDetail.getChildren() != null) {
                 for (OrderDetail child : orderDetail.getChildren()) {
-                    // Xử lý các topping của từng sản phẩm con
-                    if (child.getChildren() != null && !child.getChildren().isEmpty()) {
+                    if (child.getChildren() != null) {
                         for (OrderDetail topping : child.getChildren()) {
-                            priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
                             orderDetailRepository.delete(topping);
                         }
                     }
