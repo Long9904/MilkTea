@@ -67,6 +67,7 @@ public class DashboardService {
             Map<String, Object> productMap = new HashMap<>();
             productMap.put("name", product[0]);
             productMap.put("quantity", product[1]);
+            productMap.put("imageUrl", product[2]);
             top3ProductsList.add(productMap);
         }
 
@@ -79,6 +80,7 @@ public class DashboardService {
             Map<String, Object> productMap = new HashMap<>();
             productMap.put("name", product[0]);
             productMap.put("quantity", product[1]);
+            productMap.put("imageUrl", product[2]);
             top3MilkTeaProductsList.add(productMap);
         }
         stats.put("top3MilkTeaAndComboProducts", top3MilkTeaProductsList);
@@ -90,6 +92,7 @@ public class DashboardService {
             Map<String, Object> productMap = new HashMap<>();
             productMap.put("name", product[0]);
             productMap.put("quantity", product[1]);
+            productMap.put("imageUrl", product[2]);
             top3ExtraProductsList.add(productMap);
         }
         stats.put("top3ExtraProducts", top3ExtraProductsList);
