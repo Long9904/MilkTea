@@ -60,8 +60,28 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "from OrderDetail od " +
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
+            "and od.parent is not null " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
     List<Object[]> findTop3ExtraProduct(ProductUsageEnum productUsageEnum);
+
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
+            "JOIN od.product p " +
+            "WHERE p.productUsage = 'MAIN' " +
+            "AND od.parent is null " +
+            "AND p.productType = 'SINGLE'")
+    Long getTotalSingleProductsSold();
+
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
+            "JOIN od.product p " +
+            "WHERE p.productUsage = 'MAIN' " +
+            "AND od.parent is null " +
+            "AND p.productType = 'COMBO'")
+    Long getTotalCombosSold();
+
+    @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
+            "JOIN od.product p " +
+            "WHERE p.productUsage = 'EXTRA'")
+    Long getTotalExtrasSold();
 }

@@ -43,4 +43,9 @@ public class DashBoardAPI {
     public ResponseEntity<?> getRevenueByYear() {
         return ResponseEntity.ok(dashboardService.getRevenueByYear());
     }
+
+    @GetMapping("/total-sold")
+    public ResponseEntity<?> getTotalSoldStats() {
+        return ResponseEntity.ok(dashboardService.getTotalSoldStats());
+    }
 }

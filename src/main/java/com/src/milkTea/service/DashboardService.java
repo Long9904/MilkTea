@@ -174,4 +174,27 @@ public class DashboardService {
         }
         return results;
     }
+
+    public Map<String, Object> getTotalSoldStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Tổng số ly trà sữa đã bán
+        Long totalSingleProducts = productRepository.getTotalSingleProductsSold();
+        stats.put("totalSingleProducts", totalSingleProducts != null ? totalSingleProducts : 0);
+        
+        // Tổng số combo đã bán
+        Long totalCombos = productRepository.getTotalCombosSold();
+        stats.put("totalCombos", totalCombos != null ? totalCombos : 0);
+        
+        // Tổng số extra đã bán
+        Long totalExtras = productRepository.getTotalExtrasSold();
+        stats.put("totalExtras", totalExtras != null ? totalExtras : 0);
+        
+        // Tổng tất cả (ly trà sữa + combo)
+        Long totalAll = (totalSingleProducts != null ? totalSingleProducts : 0) + 
+                       (totalCombos != null ? totalCombos : 0);
+        stats.put("totalProducts", totalAll);
+        
+        return stats;
+    }
 }
