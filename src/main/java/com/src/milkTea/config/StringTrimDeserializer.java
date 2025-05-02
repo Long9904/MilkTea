@@ -13,4 +13,5 @@ public class StringTrimDeserializer extends JsonDeserializer<String> {
         String value = jsonParser.getValueAsString();
         return value != null ? value.trim() : null;
     }
+    // This method is used to trim the string value from the JSON input.
 }
