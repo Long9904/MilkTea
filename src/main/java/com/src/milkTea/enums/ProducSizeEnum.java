@@ -5,5 +5,6 @@ public enum ProducSizeEnum {
     M,
     L,
     NONE,
-    XL
+    XL,
+    EXTRA
 }
