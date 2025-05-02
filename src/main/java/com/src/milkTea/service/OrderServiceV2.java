@@ -10,16 +10,28 @@ import com.src.milkTea.enums.ProducSizeEnum;
 import com.src.milkTea.enums.ProductTypeEnum;
 import com.src.milkTea.enums.ProductUsageEnum;
 import com.src.milkTea.exception.NotFoundException;
+import com.src.milkTea.exception.OrderException;
 import com.src.milkTea.exception.ProductException;
 import com.src.milkTea.repository.ComboDetailRepository;
 import com.src.milkTea.repository.OrderDetailRepository;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.ProductRepository;
 import com.src.milkTea.utils.UserUtils;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
+/**
+ * Service xử lý các thao tác liên quan đến đơn hàng phiên bản 2
+ * Hỗ trợ các chức năng:
+ * - Thêm sản phẩm vào giỏ hàng mới
+ * - Thêm sản phẩm vào đơn hàng có sẵn
+ * - Xóa chi tiết đơn hàng
+ * - Cập nhật chi tiết đơn hàng
+ */
 @Service
 public class OrderServiceV2 {
 
@@ -41,361 +53,358 @@ public class OrderServiceV2 {
     @Autowired
     private ModelMapper modelMapper;
 
+    /**
+     * Thêm sản phẩm vào giỏ hàng mới
+     * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
+     * @return Đơn hàng mới được tạo
+     */
+    @Transactional
     public Orders addItemToCart(OrderRequest orderRequest) {
-
-        Orders order = new Orders();
-        order.setUser(userUtils.getCurrentUser());
-        order.setStatus(OrderStatusEnum.PENDING);
-        order.setTotalPrice(0);
-        Orders savedOrder = orderRepository.save(order);
-
-        double totalPrice = 0;
-
-
-        // Save order details
-        for (OrderItemRequest item : orderRequest.getParentItems()) {
-
-            if (item.isCombo()) {
-                Product comboProduct = productRepository.findById(item.getProductId())
-                        .orElseThrow(() -> new NotFoundException("Combo product not found"));
-
-                if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
-                    throw new ProductException("Product is not a combo");
-                }
-
-                // Tạo OrderDetail cha cho combo
-                OrderDetail comboDetail = new OrderDetail();
-                comboDetail.setOrders(savedOrder);
-                comboDetail.setProduct(comboProduct);
-                comboDetail.setQuantity(item.getQuantity());
-                comboDetail.setSize(ProducSizeEnum.NONE);
-                comboDetail.setUnitPrice(comboProduct.getBasePrice());
-                comboDetail.setCombo(true);
-                comboDetail.setNote(item.getNote());
-                OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
-
-                totalPrice += comboProduct.getBasePrice() * item.getQuantity();
-
-                // Xử lý các childItems trong combo (ly trà sữa trong combo)
-                for (OrderItemRequest childItem : item.getChildItems()) {
-                    Product childProduct = productRepository.findById(childItem.getProductId())
-                            .orElseThrow(() -> new NotFoundException("Child product not found"));
-                    //
-                    if (childProduct.getProductType() == ProductTypeEnum.COMBO) {
-                        throw new ProductException("Product is not a SINGLE product");
-                    }// Không cho combo như là 1 sản phẩm SINGLE
-
-                    OrderDetail childDetail = new OrderDetail();
-                    childDetail.setOrders(savedOrder);
-                    childDetail.setProduct(childProduct);
-                    childDetail.setParent(savedComboDetail); // Parent là combo
-                    // Số lượng của sản phẩm con = số lượng yêu cầu * số lượng combo
-                    childDetail.setQuantity(childItem.getQuantity() * item.getQuantity());
-                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
-                    childDetail.setUnitPrice(0); // Sản phẩm con trong combo giá 0
-                    childDetail.setCombo(false);
-                    childDetail.setNote(childItem.getNote());
-                    OrderDetail savedChildDetail = orderDetailRepository.save(childDetail);
-
-                    // Xử lý tiếp topping nếu có (childItems của ly trà sữa)
-                    for (OrderItemRequest toppingItem : childItem.getChildItems()) {
-                        Product toppingProduct = productRepository.findById(toppingItem.getProductId())
-                                .orElseThrow(() -> new NotFoundException("Topping product not found"));
-
-                        if (toppingProduct.getProductType() == ProductTypeEnum.COMBO) {
-                            throw new ProductException("Product is not a SINGLE product");
-                        } // Không cho combo như là topping
-                        if (toppingProduct.getProductUsage() == ProductUsageEnum.MAIN) {
-                            throw new ProductException("Product is not a EXTRA product");
-                        } // Không cho combo như là 1 sản phẩm SINGLE
-
-                        OrderDetail toppingDetail = new OrderDetail();
-                        toppingDetail.setOrders(savedOrder);
-                        toppingDetail.setProduct(toppingProduct);
-                        toppingDetail.setParent(savedChildDetail); // Parent là ly trà sữa
-                        // Số lượng topping = số lượng yêu cầu * số lượng ly trà sữa * số lượng combo
-                        toppingDetail.setQuantity(toppingItem.getQuantity() * childItem.getQuantity() * item.getQuantity());
-                        toppingDetail.setSize(ProducSizeEnum.NONE);
-                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
-                        toppingDetail.setCombo(false);
-                        toppingDetail.setNote(toppingItem.getNote());
-                        orderDetailRepository.save(toppingDetail);
-
-                        // Topping có thể tính phí
-                        totalPrice += toppingProduct.getBasePrice() * toppingDetail.getQuantity();
-                    }
-                }
-
-            } else {
-                // Xử lý cho sản phẩm thông thường
-                OrderDetail orderDetail = new OrderDetail();
-                orderDetail.setQuantity(item.getQuantity());
-                orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
-                Product product = productRepository.findById(item.getProductId()).orElseThrow(()
-                        -> new NotFoundException("Product not found"));
-                if(product.getProductType() == ProductTypeEnum.COMBO) {
-                    throw new ProductException("Product is not a SINGLE product");
-                } // Không cho combo như là 1 sản phẩm SINGLE
-
-                switch (item.getSize()) {
-                    case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
-                    case "L" -> orderDetail.setUnitPrice(product.getBasePrice() + 5000);
-                    case "S" -> orderDetail.setUnitPrice(product.getBasePrice() - 5000);
-                    case "XL" -> orderDetail.setUnitPrice(product.getBasePrice() + 10000);
-                }
-
-                orderDetail.setProduct(product);
-                orderDetail.setOrders(order);
-                orderDetail.setCombo(false);
-
-                // Xử lí size cho sản phẩm thông thường
-                OrderDetail savedOrderDetail = orderDetailRepository.save(orderDetail);
-
-                // Tính tổng giá trị đơn hàng
-                totalPrice += orderDetail.getUnitPrice() * orderDetail.getQuantity();
-
-                // Xử lý cho sản phẩm con (nếu có)
-                for (OrderItemRequest childItem : item.getChildItems()) {
-                    OrderDetail childOrderDetail = new OrderDetail();
-                    // Số lượng topping = số lượng yêu cầu * số lượng ly chính
-                    childOrderDetail.setQuantity(childItem.getQuantity() * item.getQuantity());
-                    childOrderDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
-                    Product childProduct = productRepository.findById(childItem.getProductId()).orElseThrow(()
-                            -> new RuntimeException("Product not found"));
-
-                    // Kiểm tra xem sản phẩm con có phải là combo hoặc ly trà sữa không
-                    if ( childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
-                        throw new ProductException("Product is not a EXTRA product");
-                    } // Không cho combo như là 1 sản phẩm SINGLE
-
-                    childOrderDetail.setUnitPrice(childProduct.getBasePrice());
-
-                    childOrderDetail.setProduct(childProduct);
-                    childOrderDetail.setOrders(savedOrder);
-                    childOrderDetail.setParent(savedOrderDetail); // Set parent
-                    childOrderDetail.setCombo(false);
-                    orderDetailRepository.save(childOrderDetail);
-
-                    // Tính tổng giá trị đơn hàng với số lượng đã nhân
-                    totalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
-                }
-            }
-        }
-        // Cập nhật tổng giá trị đơn hàng
-        savedOrder.setTotalPrice(totalPrice);
-        return orderRepository.save(savedOrder);
+        Orders order = createNewOrder();
+        double totalPrice = processOrderItems(orderRequest, order);
+        order.setTotalPrice(totalPrice);
+        return orderRepository.save(order);
     }
 
+    /**
+     * Thêm sản phẩm vào đơn hàng có sẵn
+     * @param orderId ID của đơn hàng cần thêm sản phẩm
+     * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
+     * @return Đơn hàng sau khi được cập nhật
+     */
+    @Transactional
     public Orders addItemToExistingOrder(Long orderId, OrderRequest orderRequest) {
-        Orders existingOrder = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
-
-        if (existingOrder.getStatus() != OrderStatusEnum.PENDING) {
-            throw new ProductException("Chỉ có thể thêm vào đơn hàng ở trạng thái chờ");
-        }
-
-        // Tính giá của các sản phẩm mới thêm vào
-        double additionalPrice = 0;  // Chỉ tính giá của sản phẩm mới
-
-        // Lưu chi tiết đơn hàng
-        for (OrderItemRequest item : orderRequest.getParentItems()) {
-            if (item.isCombo()) {
-                Product comboProduct = productRepository.findById(item.getProductId())
-                        .orElseThrow(() -> new NotFoundException("Không tìm thấy combo"));
-
-                if (comboProduct.getProductType() != ProductTypeEnum.COMBO) {
-                    throw new ProductException("Sản phẩm không phải là combo");
-                }
-
-                // Tạo OrderDetail cha cho combo
-                OrderDetail comboDetail = new OrderDetail();
-                comboDetail.setOrders(existingOrder);
-                comboDetail.setProduct(comboProduct);
-                comboDetail.setQuantity(item.getQuantity());
-                comboDetail.setSize(ProducSizeEnum.NONE);
-                comboDetail.setUnitPrice(comboProduct.getBasePrice());
-                comboDetail.setCombo(true);
-                comboDetail.setNote(item.getNote());
-                OrderDetail savedComboDetail = orderDetailRepository.save(comboDetail);
-
-                additionalPrice += comboProduct.getBasePrice() * item.getQuantity();
-
-                // Xử lý các sản phẩm con trong combo
-                for (OrderItemRequest childItem : item.getChildItems()) {
-                    Product childProduct = productRepository.findById(childItem.getProductId())
-                            .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm con"));
-
-                    if (childProduct.getProductType() == ProductTypeEnum.COMBO) {
-                        throw new ProductException("Sản phẩm con không thể là combo");
-                    }
-
-                    OrderDetail childDetail = new OrderDetail();
-                    childDetail.setOrders(existingOrder);
-                    childDetail.setProduct(childProduct);
-                    childDetail.setParent(savedComboDetail);
-                    // Số lượng sản phẩm con = số lượng yêu cầu * số lượng combo
-                    childDetail.setQuantity(childItem.getQuantity() * item.getQuantity());
-                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
-                    childDetail.setUnitPrice(0); // Sản phẩm con trong combo có giá = 0
-                    childDetail.setCombo(false);
-                    childDetail.setNote(childItem.getNote());
-                    OrderDetail savedChildDetail = orderDetailRepository.save(childDetail);
-
-                    // Xử lý topping nếu có
-                    for (OrderItemRequest toppingItem : childItem.getChildItems()) {
-                        Product toppingProduct = productRepository.findById(toppingItem.getProductId())
-                                .orElseThrow(() -> new NotFoundException("Không tìm thấy topping"));
-
-                        if (toppingProduct.getProductType() == ProductTypeEnum.COMBO) {
-                            throw new ProductException("Topping không thể là combo");
-                        }
-                        if (toppingProduct.getProductUsage() == ProductUsageEnum.MAIN) {
-                            throw new ProductException("Topping phải là sản phẩm phụ");
-                        }
-
-                        OrderDetail toppingDetail = new OrderDetail();
-                        toppingDetail.setOrders(existingOrder);
-                        toppingDetail.setProduct(toppingProduct);
-                        toppingDetail.setParent(savedChildDetail);
-                        // Số lượng topping = số lượng yêu cầu * số lượng sản phẩm con * số lượng combo
-                        toppingDetail.setQuantity(toppingItem.getQuantity() * childItem.getQuantity() * item.getQuantity());
-                        toppingDetail.setSize(ProducSizeEnum.NONE);
-                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
-                        toppingDetail.setCombo(false);
-                        toppingDetail.setNote(toppingItem.getNote());
-                        orderDetailRepository.save(toppingDetail);
-
-                        additionalPrice += toppingProduct.getBasePrice() * toppingDetail.getQuantity();
-                    }
-                }
-            } else {
-                // Xử lý sản phẩm đơn
-                OrderDetail orderDetail = new OrderDetail();
-                orderDetail.setQuantity(item.getQuantity());
-                orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
-                Product product = productRepository.findById(item.getProductId())
-                        .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm"));
-
-                if(product.getProductType() == ProductTypeEnum.COMBO) {
-                    throw new ProductException("Sản phẩm không thể là combo");
-                }
-
-                switch (item.getSize()) {
-                    case "M" -> orderDetail.setUnitPrice(product.getBasePrice());
-                    case "L" -> orderDetail.setUnitPrice(product.getBasePrice() + 5000);
-                    case "S" -> orderDetail.setUnitPrice(product.getBasePrice() - 5000);
-                    case "XL" -> orderDetail.setUnitPrice(product.getBasePrice() + 10000);
-                }
-
-                orderDetail.setProduct(product);
-                orderDetail.setOrders(existingOrder);
-                orderDetail.setCombo(false);
-
-                OrderDetail savedOrderDetail = orderDetailRepository.save(orderDetail);
-
-                additionalPrice += orderDetail.getUnitPrice() * orderDetail.getQuantity();
-
-                // Xử lý topping
-                for (OrderItemRequest childItem : item.getChildItems()) {
-                    OrderDetail childOrderDetail = new OrderDetail();
-                    // Số lượng topping = số lượng yêu cầu * số lượng sản phẩm chính
-                    childOrderDetail.setQuantity(childItem.getQuantity() * item.getQuantity());
-                    childOrderDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
-                    Product childProduct = productRepository.findById(childItem.getProductId())
-                            .orElseThrow(() -> new NotFoundException("Không tìm thấy topping"));
-
-                    if (childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
-                        throw new ProductException("Topping phải là sản phẩm phụ");
-                    }
-
-                    childOrderDetail.setUnitPrice(childProduct.getBasePrice());
-                    childOrderDetail.setProduct(childProduct);
-                    childOrderDetail.setOrders(existingOrder);
-                    childOrderDetail.setParent(savedOrderDetail);
-                    childOrderDetail.setCombo(false);
-                    orderDetailRepository.save(childOrderDetail);
-
-                    additionalPrice += childOrderDetail.getUnitPrice() * childOrderDetail.getQuantity();
-                }
-            }
-        }
-
-        // Cuối cùng mới cộng giá mới vào tổng giá cũ
+        Orders existingOrder = findAndValidateOrder(orderId);
+        double additionalPrice = processOrderItems(orderRequest, existingOrder);
         existingOrder.setTotalPrice(existingOrder.getTotalPrice() + additionalPrice);
         return orderRepository.save(existingOrder);
     }
 
+    /**
+     * Tạo đơn hàng mới với trạng thái PENDING
+     * @return Đơn hàng mới được tạo
+     */
+    private Orders createNewOrder() {
+        Orders order = new Orders();
+        order.setUser(userUtils.getCurrentUser());
+        order.setStatus(OrderStatusEnum.PENDING);
+        order.setTotalPrice(0);
+        return orderRepository.save(order);
+    }
 
+    /**
+     * Tìm và kiểm tra trạng thái của đơn hàng
+     * @param orderId ID của đơn hàng cần kiểm tra
+     * @return Đơn hàng nếu tìm thấy và hợp lệ
+     * @throws NotFoundException nếu không tìm thấy đơn hàng
+     * @throws ProductException nếu đơn hàng không ở trạng thái PENDING
+     */
+    private Orders findAndValidateOrder(Long orderId) {
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
+        validateOrderStatus(order);
+        return order;
+    }
+
+    /**
+     * Kiểm tra trạng thái của đơn hàng có phải là PENDING không
+     * @param order Đơn hàng cần kiểm tra
+     * @throws ProductException nếu đơn hàng không ở trạng thái PENDING
+     */
+    private void validateOrderStatus(Orders order) {
+        if (order.getStatus() != OrderStatusEnum.PENDING) {
+            throw new ProductException("Chỉ có thể thao tác với đơn hàng ở trạng thái chờ");
+        }
+    }
+
+    /**
+     * Xử lý danh sách các sản phẩm cần thêm vào đơn hàng
+     * @param orderRequest Request chứa thông tin các sản phẩm
+     * @param order Đơn hàng cần thêm sản phẩm
+     * @return Tổng giá trị của các sản phẩm được thêm vào
+     */
+    private double processOrderItems(OrderRequest orderRequest, Orders order) {
+        double totalPrice = 0;
+        for (OrderItemRequest item : orderRequest.getParentItems()) {
+            // Xử lý sản phẩm đơn hoặc combo
+            if (item.isCombo()) {
+                totalPrice += processComboItem(item, order);
+            } else {
+                totalPrice += processSingleItem(item, order);
+            }
+        }
+        return totalPrice;
+    }
+
+    /**
+     * Xử lý thêm combo vào đơn hàng
+     * @param item Thông tin combo cần thêm
+     * @param order Đơn hàng cần thêm combo
+     * @return Giá của combo
+     */
+    private double processComboItem(OrderItemRequest item, Orders order) {
+        Product comboProduct = findAndValidateComboProduct(item.getProductId());
+        OrderDetail comboDetail = createComboDetail(item, order, comboProduct);
+        double price = comboProduct.getBasePrice() * item.getQuantity();
+        
+        // Xử lý các sản phẩm con trong combo
+        for (OrderItemRequest childItem : item.getChildItems()) {
+            createComboChildDetail(childItem, order, comboDetail, item.getQuantity());
+        }
+        
+        return price;
+    }
+
+    /**
+     * Tìm và kiểm tra sản phẩm combo
+     * @param productId ID của sản phẩm cần kiểm tra
+     * @return Sản phẩm combo nếu hợp lệ
+     * @throws NotFoundException nếu không tìm thấy sản phẩm
+     * @throws ProductException nếu sản phẩm không phải là combo
+     */
+    private Product findAndValidateComboProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy combo"));
+        if (product.getProductType() != ProductTypeEnum.COMBO) {
+            throw new ProductException("Sản phẩm không phải là combo");
+        }
+        return product;
+    }
+
+    /**
+     * Tạo chi tiết đơn hàng cho combo
+     * @param item Thông tin combo
+     * @param order Đơn hàng
+     * @param comboProduct Sản phẩm combo
+     * @return Chi tiết đơn hàng của combo
+     */
+    private OrderDetail createComboDetail(OrderItemRequest item, Orders order, Product comboProduct) {
+        OrderDetail comboDetail = new OrderDetail();
+        comboDetail.setOrders(order);
+        comboDetail.setProduct(comboProduct);
+        comboDetail.setQuantity(item.getQuantity());
+        comboDetail.setSize(ProducSizeEnum.NONE);
+        comboDetail.setUnitPrice(comboProduct.getBasePrice());
+        comboDetail.setCombo(true);
+        comboDetail.setNote(item.getNote());
+        return orderDetailRepository.save(comboDetail);
+    }
+
+    /**
+     * Tạo chi tiết đơn hàng cho sản phẩm con trong combo
+     * @param childItem Thông tin sản phẩm con
+     * @param order Đơn hàng
+     * @param parent Chi tiết đơn hàng của combo cha
+     * @param parentQuantity Số lượng combo cha
+     */
+    private void createComboChildDetail(OrderItemRequest childItem, Orders order, OrderDetail parent, int parentQuantity) {
+        Product childProduct = findAndValidateChildProduct(childItem.getProductId());
+        OrderDetail childDetail = new OrderDetail();
+        childDetail.setOrders(order);
+        childDetail.setProduct(childProduct);
+        childDetail.setParent(parent);
+        // Số lượng = số lượng yêu cầu * số lượng combo
+        childDetail.setQuantity(childItem.getQuantity() * parentQuantity);
+        childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+        childDetail.setUnitPrice(0); // Sản phẩm con trong combo có giá = 0
+        childDetail.setCombo(false);
+        childDetail.setNote(childItem.getNote());
+        orderDetailRepository.save(childDetail);
+    }
+
+    /**
+     * Xử lý thêm sản phẩm đơn vào đơn hàng
+     * @param item Thông tin sản phẩm đơn
+     * @param order Đơn hàng
+     * @return Tổng giá của sản phẩm và topping
+     */
+    private double processSingleItem(OrderItemRequest item, Orders order) {
+        Product product = findAndValidateSingleProduct(item.getProductId());
+        OrderDetail mainDetail = createMainDetail(item, order, product);
+        double price = mainDetail.getUnitPrice() * mainDetail.getQuantity();
+
+        // Xử lý các topping
+        for (OrderItemRequest toppingItem : item.getChildItems()) {
+            price += createToppingDetail(toppingItem, order, mainDetail, item.getQuantity());
+        }
+
+        return price;
+    }
+
+    /**
+     * Tạo chi tiết đơn hàng cho sản phẩm chính
+     * @param item Thông tin sản phẩm
+     * @param order Đơn hàng
+     * @param product Sản phẩm chính
+     * @return Chi tiết đơn hàng của sản phẩm chính
+     */
+    private OrderDetail createMainDetail(OrderItemRequest item, Orders order, Product product) {
+        OrderDetail mainDetail = new OrderDetail();
+        mainDetail.setQuantity(item.getQuantity());
+        mainDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
+        mainDetail.setUnitPrice(calculatePriceBySize(product.getBasePrice(), item.getSize()));
+        mainDetail.setProduct(product);
+        mainDetail.setOrders(order);
+        mainDetail.setCombo(false);
+        mainDetail.setNote(item.getNote());
+        return orderDetailRepository.save(mainDetail);
+    }
+
+    /**
+     * Tính giá sản phẩm theo size
+     * @param basePrice Giá gốc của sản phẩm
+     * @param size Size của sản phẩm (S, M, L, XL)
+     * @return Giá sau khi tính theo size
+     */
+    private double calculatePriceBySize(double basePrice, String size) {
+        return switch (size) {
+            case "L" -> basePrice + 5000;  // Size L: +5000
+            case "S" -> basePrice - 5000;  // Size S: -5000
+            case "XL" -> basePrice + 10000; // Size XL: +10000
+            default -> basePrice;          // Size M: giá gốc
+        };
+    }
+
+    /**
+     * Tạo chi tiết đơn hàng cho topping
+     * @param toppingItem Thông tin topping
+     * @param order Đơn hàng
+     * @param parent Chi tiết đơn hàng của sản phẩm chính
+     * @param parentQuantity Số lượng sản phẩm chính
+     * @return Giá của topping
+     */
+    private double createToppingDetail(OrderItemRequest toppingItem, Orders order, OrderDetail parent, int parentQuantity) {
+        Product toppingProduct = findAndValidateTopping(toppingItem.getProductId());
+        OrderDetail toppingDetail = new OrderDetail();
+        // Số lượng topping = số lượng yêu cầu * số lượng sản phẩm chính
+        toppingDetail.setQuantity(toppingItem.getQuantity() * parentQuantity);
+        toppingDetail.setSize(ProducSizeEnum.NONE);
+        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
+        toppingDetail.setProduct(toppingProduct);
+        toppingDetail.setOrders(order);
+        toppingDetail.setParent(parent);
+        toppingDetail.setCombo(false);
+        toppingDetail.setNote(toppingItem.getNote());
+        orderDetailRepository.save(toppingDetail);
+
+        return toppingDetail.getUnitPrice() * toppingDetail.getQuantity();
+    }
+
+    private Product findAndValidateChildProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm con"));
+        if (product.getProductType() == ProductTypeEnum.COMBO) {
+            throw new ProductException("Sản phẩm con không thể là combo");
+        }
+        return product;
+    }
+
+    private Product findAndValidateSingleProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm"));
+        if (product.getProductType() == ProductTypeEnum.COMBO) {
+            throw new ProductException("Sản phẩm không thể là combo");
+        }
+        return product;
+    }
+
+    private Product findAndValidateTopping(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy topping"));
+        if (product.getProductUsage() != ProductUsageEnum.EXTRA) {
+            throw new ProductException("Sản phẩm không phải là topping");
+        }
+        return product;
+    }
+
+    @Transactional
     public void deleteOrderDetail(Long orderId, Long orderDetailId) {
+        // 1. Kiểm tra order tồn tại và trạng thái
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
 
-        // Chỉ cho phép sửa đơn hàng ở trạng thái PENDING
+        // Chỉ cho phép xóa item trong đơn hàng PENDING
         if (order.getStatus() != OrderStatusEnum.PENDING) {
             throw new ProductException("Chỉ có thể sửa đơn hàng ở trạng thái chờ");
         }
 
+        // 2. Kiểm tra orderDetail tồn tại và thuộc về order
         OrderDetail orderDetail = orderDetailRepository.findById(orderDetailId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy chi tiết đơn hàng"));
 
-        // Kiểm tra xem chi tiết đơn hàng có thuộc về đơn hàng không
         if (!orderDetail.getOrders().getId().equals(orderId)) {
             throw new ProductException("Chi tiết đơn hàng không thuộc về đơn hàng này");
         }
 
         double priceToSubtract = 0;
 
-        // Trường hợp 1: Xóa combo
+        // 3. Xử lý 3 trường hợp xóa:
+        // TRƯỜNG HỢP 1: Xóa combo
         if (orderDetail.isCombo()) {
+            // Tính giá combo (không tính giá sản phẩm con vì giá = 0)
             priceToSubtract += orderDetail.getUnitPrice() * orderDetail.getQuantity();
-            
-            // Xóa theo thứ tự: topping -> sản phẩm con -> combo
+
+            // Xóa theo thứ tự từ trong ra ngoài: topping -> sản phẩm con -> combo
             if (orderDetail.getChildren() != null) {
                 for (OrderDetail child : orderDetail.getChildren()) {
+                    // Xóa topping của sản phẩm con (nếu có)
                     if (child.getChildren() != null) {
                         for (OrderDetail topping : child.getChildren()) {
                             orderDetailRepository.delete(topping);
                         }
                     }
+                    // Xóa sản phẩm con
                     orderDetailRepository.delete(child);
                 }
             }
+            // Cuối cùng xóa combo
             orderDetailRepository.delete(orderDetail);
         }
-        // Nếu là sản phẩm đơn với topping
+
+        // TRƯỜNG HỢP 2: Xóa sản phẩm đơn (có thể có topping)
         else if (orderDetail.getParent() == null) {
             // Tính giá sản phẩm chính
             priceToSubtract += orderDetail.getUnitPrice() * orderDetail.getQuantity();
-            
-            // Xử lý các topping
+
+            // Xóa và tính giá các topping
             if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
                 for (OrderDetail topping : orderDetail.getChildren()) {
                     priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
                     orderDetailRepository.delete(topping);
                 }
             }
+            // Xóa sản phẩm chính
             orderDetailRepository.delete(orderDetail);
         }
-        // Nếu là topping hoặc sản phẩm con trong combo
+
+        // TRƯỜNG HỢP 3: Xóa topping hoặc sản phẩm con trong combo
         else {
-            // Nếu là topping, chỉ cần xóa nó và tính giá của nó
+            // 3.1: Nếu là topping của sản phẩm đơn
             if (orderDetail.getParent() != null && !orderDetail.getParent().isCombo()) {
+                // Chỉ cần tính và trừ giá topping
                 priceToSubtract = orderDetail.getUnitPrice() * orderDetail.getQuantity();
             }
-            // Nếu là sản phẩm con trong combo, xóa nó và các topping của nó
+            // 3.2: Nếu là sản phẩm con trong combo
             else {
+                // Xóa topping của sản phẩm con (nếu có)
                 if (orderDetail.getChildren() != null && !orderDetail.getChildren().isEmpty()) {
                     for (OrderDetail topping : orderDetail.getChildren()) {
-                        priceToSubtract += topping.getUnitPrice() * topping.getQuantity();
+                        // Không cần trừ giá vì sản phẩm con trong combo có giá = 0
                         orderDetailRepository.delete(topping);
                     }
                 }
             }
+            // Xóa topping hoặc sản phẩm con
             orderDetailRepository.delete(orderDetail);
         }
 
-        // Cập nhật tổng giá đơn hàng
+        // 4. Cập nhật lại tổng giá của order
         order.setTotalPrice(order.getTotalPrice() - priceToSubtract);
         orderRepository.save(order);
     }
+
+    // ----------------------------------------------------------------------------------------- //
+
+    // Cập nhật chi tiết đơn hàng
+
 }

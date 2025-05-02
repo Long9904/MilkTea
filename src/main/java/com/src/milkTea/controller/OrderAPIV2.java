@@ -1,5 +1,6 @@
 package com.src.milkTea.controller;
 
+import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
 import com.src.milkTea.service.OrderService;
 import com.src.milkTea.service.OrderServiceV2;
@@ -67,5 +68,14 @@ public class OrderAPIV2 {
         orderService.updateOrderStatus(id, status);
         return ResponseEntity.ok("Order status updated successfully");
     }
+
+//    @PutMapping("/{orderId}/details/{orderDetailId}/update")
+//    @Operation(summary = "Update an order detail by overwriting")
+//    public ResponseEntity<?> updateOrderDetail(
+//            @PathVariable Long orderId,
+//            @PathVariable Long orderDetailId,
+//            @RequestBody OrderItemRequest orderItemRequest) {
+//        return ResponseEntity.ok(orderServiceV2.updateOrderDetail(orderId, orderDetailId, orderItemRequest));
+//    }
 
 }
