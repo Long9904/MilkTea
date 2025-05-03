@@ -3,9 +3,11 @@ package com.src.milkTea.service;
 import com.src.milkTea.enums.ProductTypeEnum;
 import com.src.milkTea.enums.ProductUsageEnum;
 import com.src.milkTea.enums.UserRoleEnum;
+import com.src.milkTea.enums.PaymentMethodEnum;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.ProductRepository;
 import com.src.milkTea.repository.UserRepository;
+import com.src.milkTea.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,9 @@ public class DashboardService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     public Map<String, Object> getDashBoardStats() {
 
@@ -194,6 +199,29 @@ public class DashboardService {
         Long totalAll = (totalSingleProducts != null ? totalSingleProducts : 0) + 
                        (totalCombos != null ? totalCombos : 0);
         stats.put("totalProducts", totalAll);
+        
+        return stats;
+    }
+
+    public Map<String, Object> getPaymentStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Get MOMO payment stats
+        Map<String, Object> momoStats = paymentRepository.getPaymentStatsByMethod(PaymentMethodEnum.MOMO);
+        stats.put("momo", momoStats);
+        
+        // Get CASH payment stats
+        Map<String, Object> cashStats = paymentRepository.getPaymentStatsByMethod(PaymentMethodEnum.CASH);
+        stats.put("cash", cashStats);
+        
+        // Calculate total of all successful payments
+        long totalCount = ((Number) momoStats.get("count")).longValue() + 
+                         ((Number) cashStats.get("count")).longValue();
+        double totalAmount = ((Number) momoStats.get("total")).doubleValue() + 
+                           ((Number) cashStats.get("total")).doubleValue();
+        
+        stats.put("totalCount", totalCount);
+        stats.put("totalAmount", totalAmount);
         
         return stats;
     }

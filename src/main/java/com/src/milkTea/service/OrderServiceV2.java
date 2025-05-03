@@ -2,28 +2,26 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
-import com.src.milkTea.entities.ComboDetail;
-import com.src.milkTea.entities.OrderDetail;
-import com.src.milkTea.entities.Orders;
-import com.src.milkTea.entities.Product;
-import com.src.milkTea.enums.OrderStatusEnum;
-import com.src.milkTea.enums.ProducSizeEnum;
-import com.src.milkTea.enums.ProductTypeEnum;
-import com.src.milkTea.enums.ProductUsageEnum;
+import com.src.milkTea.dto.response.OrderResponse;
+import com.src.milkTea.dto.response.PagingResponse;
+import com.src.milkTea.entities.*;
+import com.src.milkTea.enums.*;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.OrderException;
 import com.src.milkTea.exception.ProductException;
-import com.src.milkTea.repository.ComboDetailRepository;
-import com.src.milkTea.repository.OrderDetailRepository;
-import com.src.milkTea.repository.OrderRepository;
-import com.src.milkTea.repository.ProductRepository;
+import com.src.milkTea.repository.*;
+import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service xử lý các thao tác liên quan đến đơn hàng phiên bản 2
@@ -54,9 +52,11 @@ public class OrderServiceV2 {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
     /**
      * Thêm sản phẩm vào giỏ hàng mới
-     *
      * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
      * @return Đơn hàng mới được tạo
      */
@@ -132,6 +132,7 @@ public class OrderServiceV2 {
      */
     private double processOrderItems(OrderRequest orderRequest, Orders order) {
         double totalPrice = 0;
+        // Duyệt qua danh sách các sản phẩm trong request
         for (OrderItemRequest item : orderRequest.getParentItems()) {
             // Xử lý sản phẩm đơn hoặc combo
             if (item.isCombo()) {
@@ -152,6 +153,7 @@ public class OrderServiceV2 {
      */
     private double processComboItem(OrderItemRequest item, Orders order) {
         Product comboProduct = findAndValidateComboProduct(item.getProductId());
+        // Tạo chi tiết đơn hàng cho combo (sp chính)
         OrderDetail comboDetail = createComboDetail(item, order, comboProduct);
         double price = comboProduct.getBasePrice() * item.getQuantity();
 
@@ -586,5 +588,51 @@ public class OrderServiceV2 {
         }
         
         return detail;
+    }
+
+    public PagingResponse<OrderResponse> getAllOrdersByCurrentUser(Double minPrice,
+                                                                   Double maxPrice,
+                                                                   String status,
+                                                                   String paymentMethod,
+                                                                   Pageable pageable) {
+
+        String currentUser = userUtils.getCurrentUser().getUsername();
+        Optional<User> user = userRepository.findByEmail( currentUser);
+
+        if (user.isEmpty()) {
+            throw new NotFoundException("User is not found");
+        }
+        Specification<Orders> spec = Specification.where(OrderSpecification.priceBetween(minPrice, maxPrice))
+                .and(OrderSpecification.staffNameContains(user.get().getFullName()));
+        if (status != null && !status.isEmpty()) {
+            spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status.toUpperCase())));
+        }
+        if (paymentMethod != null && !paymentMethod.isEmpty()) {
+            spec = spec.and(OrderSpecification.paymentMethod(PaymentMethodEnum.valueOf(paymentMethod.toUpperCase())));
+        }
+        Page<Orders> orderPage = orderRepository.findAll(spec, pageable);
+        List<OrderResponse> orderResponses = orderPage.getContent()
+                .stream()
+                .map(this::convertToOrderResponse).toList();
+        PagingResponse<OrderResponse> response = new PagingResponse<>();
+        response.setData(orderResponses);
+        response.setPage(orderPage.getNumber());
+        response.setSize(orderPage.getSize());
+        response.setTotalElements(orderPage.getTotalElements());
+        response.setTotalPages(orderPage.getTotalPages());
+        response.setLast(orderPage.isLast());
+        return response;
+    }
+
+    private OrderResponse convertToOrderResponse(Orders order) {
+        OrderResponse orderResponse = modelMapper.map(order, OrderResponse.class);
+        if (order.getUser() != null) {
+            orderResponse.setUserId(order.getUser().getId());
+            orderResponse.setUserName(order.getUser().getFullName());
+        }
+        if (order.getPayment() != null) {
+            orderResponse.setPaymentMethod(order.getPayment().getPaymentMethod().toString());
+        }
+        return orderResponse;
     }
 }

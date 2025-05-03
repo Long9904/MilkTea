@@ -56,12 +56,14 @@ public class OrderAPIV2 {
         return ResponseEntity.ok(orderService.getAllOrders(minPrice, maxPrice, status, staffName, paymentMethod, pageable));
     }
 
+    // API cũ V1
     @Operation(summary = "Get order details by id")
     @GetMapping("/{id}/details")
     public ResponseEntity<?> getOrderDetails(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderDetails(id));
     }
 
+    // API cũ V1
     // Update order status
     @Operation(summary = "Update order status")
     @PutMapping("/{id}/status")
@@ -70,6 +72,7 @@ public class OrderAPIV2 {
         return ResponseEntity.ok("Order status updated successfully");
     }
 
+    // API mới V2
     @PutMapping("/{orderId}/details/{orderDetailId}/update")
     @Operation(summary = "Update an order detail by overwriting")
     public ResponseEntity<?> updateOrderDetail(
@@ -79,5 +82,19 @@ public class OrderAPIV2 {
             @RequestParam int quantity){
         return ResponseEntity.ok(orderServiceV2.updateOrderDetail(orderId, orderDetailId, size, quantity));
     }
+
+    // Get Order by current user
+    @Operation(summary = "Get all orders by current user")
+    @GetMapping("/me")
+    public ResponseEntity<?> getAllOrdersByCurrentUser(
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String paymentMethod
+    ) {
+        return ResponseEntity.ok(orderServiceV2.getAllOrdersByCurrentUser(minPrice, maxPrice, status, paymentMethod, pageable));
+    }
+
 
 }
