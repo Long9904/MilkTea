@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query ("SELECT COUNT(u) FROM User u WHERE u.role = :role")
     long countByRole(@Param("role")UserRoleEnum role);
+
+    Optional<User> findByEmail(String email);
 }

@@ -48,4 +48,9 @@ public class DashBoardAPI {
     public ResponseEntity<?> getTotalSoldStats() {
         return ResponseEntity.ok(dashboardService.getTotalSoldStats());
     }
+
+    @GetMapping("/payment-stats")
+    public ResponseEntity<?> getPaymentStats() {
+        return ResponseEntity.ok(dashboardService.getPaymentStats());
+    }
 }
