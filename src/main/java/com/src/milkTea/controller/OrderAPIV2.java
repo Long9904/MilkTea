@@ -69,13 +69,14 @@ public class OrderAPIV2 {
         return ResponseEntity.ok("Order status updated successfully");
     }
 
-//    @PutMapping("/{orderId}/details/{orderDetailId}/update")
-//    @Operation(summary = "Update an order detail by overwriting")
-//    public ResponseEntity<?> updateOrderDetail(
-//            @PathVariable Long orderId,
-//            @PathVariable Long orderDetailId,
-//            @RequestBody OrderItemRequest orderItemRequest) {
-//        return ResponseEntity.ok(orderServiceV2.updateOrderDetail(orderId, orderDetailId, orderItemRequest));
-//    }
+    @PutMapping("/{orderId}/details/{orderDetailId}/update")
+    @Operation(summary = "Update an order detail by overwriting")
+    public ResponseEntity<?> updateOrderDetail(
+            @PathVariable Long orderId,
+            @PathVariable Long orderDetailId,
+            @RequestParam String size,
+            @RequestParam int quantity){
+        return ResponseEntity.ok(orderServiceV2.updateOrderDetail(orderId, orderDetailId, size, quantity));
+    }
 
 }
