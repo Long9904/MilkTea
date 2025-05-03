@@ -98,5 +98,14 @@ public class PaymentAPI {
         return ResponseEntity.ok(result);
     }
 
+    // Payment with cash
+    @Operation (summary = "Payment with cash")
+    @PostMapping("/cash")
+    public ResponseEntity<?> paymentWithCash(@RequestBody PaymentRequest paymentRequest) throws Exception {
+        Map<String, Object> result = paymentService.paymentWithCash(
+                paymentRequest.getOrderId(), paymentRequest.getPaymentMethod());
+        return ResponseEntity.ok(result);
+    }
+
 }
 

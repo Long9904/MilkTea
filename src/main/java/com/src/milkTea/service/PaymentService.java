@@ -244,4 +244,23 @@ public class PaymentService {
         });
     }
 
+    public Map<String, Object> paymentWithCash(Long orderId, String paymentMethod) {
+        Orders order = orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
+        if (order.getStatus() == OrderStatusEnum.PAID) {
+            return Map.of("message", "Order has been paid!");
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(() -> new NotFoundException("Payment not found"));
+        if (payment.getStatus() == TransactionEnum.SUCCESS) {
+            return Map.of("message", "Order has been paid!");
+        }
+        payment.setStatus(TransactionEnum.SUCCESS);
+        payment.setPaymentMethod(PaymentMethodEnum.CASH);
+        paymentRepository.save(payment);
+
+        order.setStatus(OrderStatusEnum.PAID);
+        orderRepository.save(order);
+
+        return Map.of("message", "Payment successful! Please wait for the order to be processed.");
+    }
 }
