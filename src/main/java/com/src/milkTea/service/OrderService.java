@@ -138,7 +138,7 @@ public class OrderService {
                 orderDetail.setSize(ProducSizeEnum.valueOf(item.getSize()));
                 Product product = productRepository.findById(item.getProductId()).orElseThrow(()
                         -> new NotFoundException("Product not found"));
-                if(product.getProductType() == ProductTypeEnum.COMBO) {
+                if (product.getProductType() == ProductTypeEnum.COMBO) {
                     throw new ProductException("Product is not a SINGLE product");
                 } // Không cho combo như là 1 sản phẩm SINGLE
 
@@ -168,7 +168,7 @@ public class OrderService {
                             -> new RuntimeException("Product not found"));
 
                     // Kiểm tra xem sản phẩm con có phải là combo hoặc ly trà sữa không
-                    if ( childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
+                    if (childProduct.getProductUsage() == ProductUsageEnum.MAIN) {
                         throw new ProductException("Product is not a EXTRA product");
                     } // Không cho combo như là 1 sản phẩm SINGLE
 
@@ -195,11 +195,15 @@ public class OrderService {
                                                       Double maxPrice,
                                                       String status,
                                                       String staffName,
+                                                      String paymentMethod,
                                                       Pageable pageable) {
         Specification<Orders> spec = Specification.where(OrderSpecification.priceBetween(minPrice, maxPrice))
                 .and(OrderSpecification.staffNameContains(staffName));
         if (status != null && !status.isEmpty()) {
             spec = spec.and(OrderSpecification.orderStatus(OrderStatusEnum.valueOf(status.toUpperCase())));
+        }
+        if (paymentMethod != null && !paymentMethod.isEmpty()) {
+            spec = spec.and(OrderSpecification.paymentMethod(PaymentMethodEnum.valueOf(paymentMethod.toUpperCase())));
         }
         Page<Orders> orderPage = orderRepository.findAll(spec, pageable);
         List<OrderResponse> orderResponses = orderPage.getContent()
@@ -220,6 +224,9 @@ public class OrderService {
         if (order.getUser() != null) {
             orderResponse.setUserId(order.getUser().getId());
             orderResponse.setUserName(order.getUser().getFullName());
+        }
+        if (order.getPayment() != null) {
+            orderResponse.setPaymentMethod(order.getPayment().getPaymentMethod().toString());
         }
         return orderResponse;
     }

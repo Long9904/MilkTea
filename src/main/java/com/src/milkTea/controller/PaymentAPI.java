@@ -103,7 +103,16 @@ public class PaymentAPI {
     @PostMapping("/cash")
     public ResponseEntity<?> paymentWithCash(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.paymentWithCash(
-                paymentRequest.getOrderId(), paymentRequest.getPaymentMethod());
+                paymentRequest.getOrderId());
+        return ResponseEntity.ok(result);
+    }
+
+    // Switch payment method (momo to cash)
+    @Operation (summary = "Switch payment method (momo to cash)")
+    @PutMapping("/switch")
+    public ResponseEntity<?> switchPaymentMethod(@RequestBody PaymentRequest paymentRequest) throws Exception {
+        Map<String, Object> result = paymentService.switchToPaymentWithCash(
+                paymentRequest.getOrderId());
         return ResponseEntity.ok(result);
     }
 

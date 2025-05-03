@@ -34,5 +34,7 @@ public class OrderResponse {
     private Long userId;
 
     private String userName;
+
+    private String paymentMethod;
 }
 

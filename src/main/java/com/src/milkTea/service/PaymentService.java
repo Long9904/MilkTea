@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class PaymentService {
@@ -244,23 +245,111 @@ public class PaymentService {
         });
     }
 
-    public Map<String, Object> paymentWithCash(Long orderId, String paymentMethod) {
-        Orders order = orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
+    /**
+     * Xử lý thanh toán bằng tiền mặt
+     * @param orderId ID của đơn hàng cần thanh toán
+     * @return Thông báo kết quả thanh toán
+     * @throws NotFoundException nếu không tìm thấy đơn hàng
+     * @throws TransactionException nếu đơn hàng không ở trạng thái hợp lệ
+     */
+    @Transactional
+    public Map<String, Object> paymentWithCash(Long orderId) {
+        // Kiểm tra và lấy thông tin đơn hàng
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        // Kiểm tra trạng thái đơn hàng
+        if (order.getStatus() == OrderStatusEnum.PAID) {
+            return Map.of("message", "Order has been paid!");
+        }
+        if (order.getStatus() != OrderStatusEnum.PENDING) {
+            throw new TransactionException("Order is not in pending status");
+        }
+
+        // Kiểm tra payment hiện tại
+        Optional<Payment> paymentOptional = paymentRepository.findByOrderId(orderId);
+        if (paymentOptional.isPresent()) {
+            Payment payment = paymentOptional.get();
+            if (payment.getStatus() == TransactionEnum.SUCCESS) {
+                return Map.of("message", "Order has been paid!");
+            }
+            // Kiểm tra nếu đang có payment method khác đang xử lý
+            if (payment.getStatus() == TransactionEnum.PENDING && payment.getPaymentMethod() != PaymentMethodEnum.CASH) {
+                throw new TransactionException("Order is being processed via " + payment.getPaymentMethod());
+            }
+            // Cập nhật payment hiện tại
+            payment.setStatus(TransactionEnum.SUCCESS);
+            payment.setPaymentMethod(PaymentMethodEnum.CASH);
+            paymentRepository.save(payment);
+        } else {
+            // Tạo payment mới
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyy'T'HHmmss");
+            String formatted = now.format(formatter);
+            String requestId = orderId + "ORDER" + formatted;
+
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setRequestId(requestId);
+            payment.setAmount(String.valueOf((int) order.getTotalPrice()));
+            payment.setStatus(TransactionEnum.SUCCESS);
+            payment.setPaymentMethod(PaymentMethodEnum.CASH);
+            payment.setMessage("Cash payment successful");
+            paymentRepository.save(payment);
+        }
+
+        // Cập nhật trạng thái đơn hàng
+        order.setStatus(OrderStatusEnum.PAID);
+        orderRepository.save(order);
+
+        return Map.of(
+            "message", "Cash payment successful!",
+            "orderId", orderId,
+            "amount", order.getTotalPrice(),
+            "status", "SUCCESS"
+        );
+    }
+
+    /**
+     * Hủy thanh toán Momo và chuyển sang thanh toán tiền mặt
+     * @param orderId ID của đơn hàng cần chuyển đổi
+     * @return Kết quả thanh toán tiền mặt
+     */
+    @Transactional
+    public Map<String, Object> switchToPaymentWithCash(Long orderId) {
+        // Kiểm tra và lấy thông tin đơn hàng
+        Orders order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        // Kiểm tra trạng thái đơn hàng
         if (order.getStatus() == OrderStatusEnum.PAID) {
             return Map.of("message", "Order has been paid!");
         }
 
-        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(() -> new NotFoundException("Payment not found"));
-        if (payment.getStatus() == TransactionEnum.SUCCESS) {
-            return Map.of("message", "Order has been paid!");
+        // Kiểm tra payment hiện tại
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException("Payment information not found"));
+
+        // Chỉ cho phép chuyển đổi nếu đang thanh toán Momo và trong trạng thái PENDING
+        if (payment.getPaymentMethod() != PaymentMethodEnum.MOMO || payment.getStatus() != TransactionEnum.PENDING) {
+            throw new TransactionException("Cannot switch payment method in current status");
         }
-        payment.setStatus(TransactionEnum.SUCCESS);
+
+        // Đánh dấu payment Momo là FAILED và chuyển sang CASH
         payment.setPaymentMethod(PaymentMethodEnum.CASH);
+        payment.setStatus(TransactionEnum.SUCCESS);
+        payment.setMessage("User cancelled Momo payment and switched to cash payment");
         paymentRepository.save(payment);
 
+        // Cập nhật trạng thái đơn hàng
         order.setStatus(OrderStatusEnum.PAID);
         orderRepository.save(order);
 
-        return Map.of("message", "Payment successful! Please wait for the order to be processed.");
+        return Map.of(
+            "message", "Successfully switched to cash payment!",
+            "orderId", orderId,
+            "amount", order.getTotalPrice(),
+            "status", "SUCCESS"
+        );
     }
 }

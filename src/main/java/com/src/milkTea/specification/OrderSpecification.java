@@ -2,6 +2,7 @@ package com.src.milkTea.specification;
 
 import com.src.milkTea.entities.Orders;
 import com.src.milkTea.enums.OrderStatusEnum;
+import com.src.milkTea.enums.PaymentMethodEnum;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,6 +40,16 @@ public class OrderSpecification {
             if (staffName == null || staffName.isEmpty()) return cb.conjunction();
             Join<Object, Object> categoryJoin = root.join("user", JoinType.INNER);
             return cb.like(cb.lower(categoryJoin.get("fullName")), "%" + staffName.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Orders> paymentMethod(PaymentMethodEnum paymentMethodEnum) {
+        return (root, query, cb) -> {
+            if (paymentMethodEnum == null || String.valueOf(paymentMethodEnum).isEmpty()) {
+                return cb.conjunction();
+            }
+            Join<Object, Object> paymentJoin = root.join("payment", JoinType.INNER);
+            return cb.equal(paymentJoin.get("paymentMethod"), paymentMethodEnum);
         };
     }
 }
