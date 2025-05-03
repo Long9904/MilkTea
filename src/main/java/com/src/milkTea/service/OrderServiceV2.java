@@ -2,6 +2,7 @@ package com.src.milkTea.service;
 
 import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
+import com.src.milkTea.entities.ComboDetail;
 import com.src.milkTea.entities.OrderDetail;
 import com.src.milkTea.entities.Orders;
 import com.src.milkTea.entities.Product;
@@ -55,6 +56,7 @@ public class OrderServiceV2 {
 
     /**
      * Thêm sản phẩm vào giỏ hàng mới
+     *
      * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
      * @return Đơn hàng mới được tạo
      */
@@ -68,7 +70,8 @@ public class OrderServiceV2 {
 
     /**
      * Thêm sản phẩm vào đơn hàng có sẵn
-     * @param orderId ID của đơn hàng cần thêm sản phẩm
+     *
+     * @param orderId      ID của đơn hàng cần thêm sản phẩm
      * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
      * @return Đơn hàng sau khi được cập nhật
      */
@@ -82,6 +85,7 @@ public class OrderServiceV2 {
 
     /**
      * Tạo đơn hàng mới với trạng thái PENDING
+     *
      * @return Đơn hàng mới được tạo
      */
     private Orders createNewOrder() {
@@ -94,10 +98,11 @@ public class OrderServiceV2 {
 
     /**
      * Tìm và kiểm tra trạng thái của đơn hàng
+     *
      * @param orderId ID của đơn hàng cần kiểm tra
      * @return Đơn hàng nếu tìm thấy và hợp lệ
      * @throws NotFoundException nếu không tìm thấy đơn hàng
-     * @throws ProductException nếu đơn hàng không ở trạng thái PENDING
+     * @throws ProductException  nếu đơn hàng không ở trạng thái PENDING
      */
     private Orders findAndValidateOrder(Long orderId) {
         Orders order = orderRepository.findById(orderId)
@@ -108,6 +113,7 @@ public class OrderServiceV2 {
 
     /**
      * Kiểm tra trạng thái của đơn hàng có phải là PENDING không
+     *
      * @param order Đơn hàng cần kiểm tra
      * @throws ProductException nếu đơn hàng không ở trạng thái PENDING
      */
@@ -119,8 +125,9 @@ public class OrderServiceV2 {
 
     /**
      * Xử lý danh sách các sản phẩm cần thêm vào đơn hàng
+     *
      * @param orderRequest Request chứa thông tin các sản phẩm
-     * @param order Đơn hàng cần thêm sản phẩm
+     * @param order        Đơn hàng cần thêm sản phẩm
      * @return Tổng giá trị của các sản phẩm được thêm vào
      */
     private double processOrderItems(OrderRequest orderRequest, Orders order) {
@@ -138,7 +145,8 @@ public class OrderServiceV2 {
 
     /**
      * Xử lý thêm combo vào đơn hàng
-     * @param item Thông tin combo cần thêm
+     *
+     * @param item  Thông tin combo cần thêm
      * @param order Đơn hàng cần thêm combo
      * @return Giá của combo
      */
@@ -146,21 +154,22 @@ public class OrderServiceV2 {
         Product comboProduct = findAndValidateComboProduct(item.getProductId());
         OrderDetail comboDetail = createComboDetail(item, order, comboProduct);
         double price = comboProduct.getBasePrice() * item.getQuantity();
-        
+
         // Xử lý các sản phẩm con trong combo
         for (OrderItemRequest childItem : item.getChildItems()) {
             createComboChildDetail(childItem, order, comboDetail, item.getQuantity());
         }
-        
+
         return price;
     }
 
     /**
      * Tìm và kiểm tra sản phẩm combo
+     *
      * @param productId ID của sản phẩm cần kiểm tra
      * @return Sản phẩm combo nếu hợp lệ
      * @throws NotFoundException nếu không tìm thấy sản phẩm
-     * @throws ProductException nếu sản phẩm không phải là combo
+     * @throws ProductException  nếu sản phẩm không phải là combo
      */
     private Product findAndValidateComboProduct(Long productId) {
         Product product = productRepository.findById(productId)
@@ -173,8 +182,9 @@ public class OrderServiceV2 {
 
     /**
      * Tạo chi tiết đơn hàng cho combo
-     * @param item Thông tin combo
-     * @param order Đơn hàng
+     *
+     * @param item         Thông tin combo
+     * @param order        Đơn hàng
      * @param comboProduct Sản phẩm combo
      * @return Chi tiết đơn hàng của combo
      */
@@ -192,9 +202,10 @@ public class OrderServiceV2 {
 
     /**
      * Tạo chi tiết đơn hàng cho sản phẩm con trong combo
-     * @param childItem Thông tin sản phẩm con
-     * @param order Đơn hàng
-     * @param parent Chi tiết đơn hàng của combo cha
+     *
+     * @param childItem      Thông tin sản phẩm con
+     * @param order          Đơn hàng
+     * @param parent         Chi tiết đơn hàng của combo cha
      * @param parentQuantity Số lượng combo cha
      */
     private void createComboChildDetail(OrderItemRequest childItem, Orders order, OrderDetail parent, int parentQuantity) {
@@ -214,7 +225,8 @@ public class OrderServiceV2 {
 
     /**
      * Xử lý thêm sản phẩm đơn vào đơn hàng
-     * @param item Thông tin sản phẩm đơn
+     *
+     * @param item  Thông tin sản phẩm đơn
      * @param order Đơn hàng
      * @return Tổng giá của sản phẩm và topping
      */
@@ -233,8 +245,9 @@ public class OrderServiceV2 {
 
     /**
      * Tạo chi tiết đơn hàng cho sản phẩm chính
-     * @param item Thông tin sản phẩm
-     * @param order Đơn hàng
+     *
+     * @param item    Thông tin sản phẩm
+     * @param order   Đơn hàng
      * @param product Sản phẩm chính
      * @return Chi tiết đơn hàng của sản phẩm chính
      */
@@ -252,8 +265,9 @@ public class OrderServiceV2 {
 
     /**
      * Tính giá sản phẩm theo size
+     *
      * @param basePrice Giá gốc của sản phẩm
-     * @param size Size của sản phẩm (S, M, L, XL)
+     * @param size      Size của sản phẩm (S, M, L, XL)
      * @return Giá sau khi tính theo size
      */
     private double calculatePriceBySize(double basePrice, String size) {
@@ -267,9 +281,10 @@ public class OrderServiceV2 {
 
     /**
      * Tạo chi tiết đơn hàng cho topping
-     * @param toppingItem Thông tin topping
-     * @param order Đơn hàng
-     * @param parent Chi tiết đơn hàng của sản phẩm chính
+     *
+     * @param toppingItem    Thông tin topping
+     * @param order          Đơn hàng
+     * @param parent         Chi tiết đơn hàng của sản phẩm chính
      * @param parentQuantity Số lượng sản phẩm chính
      * @return Giá của topping
      */
@@ -406,5 +421,170 @@ public class OrderServiceV2 {
     // ----------------------------------------------------------------------------------------- //
 
     // Cập nhật chi tiết đơn hàng
+        /*
+                updateOrderDetail(orderId, orderDetailId, request):
 
+            - Load đơn hàng → kiểm tra trạng thái PENDING
+            - Load orderDetail cần sửa → kiểm tra có đúng order không
+            - Nếu request.isCombo:
+                - Nếu orderDetail không phải combo → lỗi (không cho chuyển)
+                - Gọi updateComboDetail(orderDetail, request)
+            - Ngược lại (single):
+                - Nếu orderDetail là combo hoặc là sản phẩm con → lỗi
+                - Gọi updateSingleDetail(orderDetail, request)
+            - Tính lại tổng tiền đơn hàng
+
+        * */
+
+    /**
+     * Cập nhật size và số lượng của chi tiết đơn hàng
+     * @param orderId ID của đơn hàng
+     * @param orderDetailId ID của chi tiết đơn hàng cần cập nhật
+     * @param size Size mới của sản phẩm
+     * @param quantity Số lượng mới
+     * @return Chi tiết đơn hàng sau khi cập nhật
+     */
+    @Transactional
+    public OrderDetail updateOrderDetail(Long orderId, Long orderDetailId, String size, int quantity) {
+
+        // Validate input
+        if (quantity <= 0) {
+            throw new OrderException("Số lượng phải lớn hơn 0");
+        }
+        if (size == null || size.isEmpty()) {
+            throw new OrderException("Size không được để trống");
+        }
+        // Kiểm tra size có hợp lệ không
+        try {
+            ProducSizeEnum.valueOf(size);
+        } catch (OrderException e) {
+            throw new OrderException("Size must be S, M, L, XL, NONE, EXTRA");
+        }
+
+        // Kiểm tra và lấy thông tin đơn hàng
+        Orders order = findAndValidateOrder(orderId);
+        OrderDetail orderDetail = findAndValidateOrderDetail(orderDetailId, orderId);
+
+        // Tính toán giá cũ để trừ khỏi tổng đơn hàng
+        double oldPrice = calculateDetailPrice(orderDetail);
+        double newPrice = 0;
+
+        if (orderDetail.isCombo()) {
+            // Cập nhật combo
+            newPrice = updateComboQuantity(orderDetail, quantity);
+        } else if (orderDetail.getParent() == null) {
+            // Cập nhật sản phẩm đơn
+            newPrice = updateSingleItemDetails(orderDetail, size, quantity);
+        } else {
+            throw new OrderException("Không thể cập nhật topping hoặc sản phẩm con trong combo");
+        }
+
+        // Cập nhật tổng giá đơn hàng
+        order.setTotalPrice(order.getTotalPrice() - oldPrice + newPrice);
+        // Nếu tổng giá < 0 thì set về 0
+        if (order.getTotalPrice() < 0) {
+            order.setTotalPrice(0);
+        }
+        orderRepository.save(order);
+
+        return orderDetail;
+    }
+
+    /**
+     * Cập nhật số lượng của combo
+     * Ví dụ: Combo có quantity = 3
+     * ComboDetail định nghĩa SP1 có quantity = 1, SP2 có quantity = 2
+     * - SP1 trong OrderDetail sẽ có quantity = 1 × 3 = 3
+     * - SP2 trong OrderDetail sẽ có quantity = 2 × 3 = 6
+     */
+    private double updateComboQuantity(OrderDetail comboDetail, int newQuantity) {
+        // Cập nhật số lượng của combo
+        comboDetail.setQuantity(newQuantity);
+        
+        // Cập nhật số lượng của các sản phẩm con
+        if (comboDetail.getChildren() != null) {
+            for (OrderDetail child : comboDetail.getChildren()) {
+                // Lấy quantity gốc từ ComboDetail
+                ComboDetail originalComboDetail = comboDetailRepository.findByComboAndChildProduct(
+                    comboDetail.getProduct(), 
+                    child.getProduct()
+                );
+                
+                if (originalComboDetail != null) {
+                    // Tính lại số lượng mới = quantity gốc từ ComboDetail × số lượng combo mới
+                    child.setQuantity(originalComboDetail.getQuantity() * newQuantity);
+                    orderDetailRepository.save(child);
+                }
+            }
+        }
+        
+        orderDetailRepository.save(comboDetail);
+        return comboDetail.getUnitPrice() * newQuantity;
+    }
+
+    /**
+     * Cập nhật chi tiết của sản phẩm đơn (size và số lượng)
+     */
+    private double updateSingleItemDetails(OrderDetail orderDetail, String size, int newQuantity) {
+        // Lưu số lượng cũ để tính toán tỷ lệ thay đổi cho topping
+        int oldQuantity = orderDetail.getQuantity();
+        
+        // Cập nhật thông tin sản phẩm chính
+        orderDetail.setQuantity(newQuantity);
+        orderDetail.setSize(ProducSizeEnum.valueOf(size));
+        orderDetail.setUnitPrice(calculatePriceBySize(orderDetail.getProduct().getBasePrice(), size));
+        
+        double totalPrice = orderDetail.getUnitPrice() * newQuantity;
+
+        // Cập nhật số lượng của các topping
+        if (orderDetail.getChildren() != null) {
+            for (OrderDetail topping : orderDetail.getChildren()) {
+                // Tính lại số lượng topping theo tỷ lệ với số lượng sản phẩm chính mới
+                int toppingNewQuantity = (topping.getQuantity() / oldQuantity) * newQuantity;
+                topping.setQuantity(toppingNewQuantity);
+                orderDetailRepository.save(topping);
+                
+                totalPrice += topping.getUnitPrice() * toppingNewQuantity;
+            }
+        }
+
+        orderDetailRepository.save(orderDetail);
+        return totalPrice;
+    }
+
+    /**
+     * Tính tổng giá của một chi tiết đơn hàng (bao gồm cả topping nếu có)
+     */
+    private double calculateDetailPrice(OrderDetail detail) {
+        double price = detail.getUnitPrice() * detail.getQuantity();
+        
+        if (detail.getChildren() != null) {
+            for (OrderDetail child : detail.getChildren()) {
+                if (!detail.isCombo()) { // Nếu không phải combo thì mới tính giá topping
+                    price += child.getUnitPrice() * child.getQuantity();
+                }
+            }
+        }
+        
+        return price;
+    }
+
+    /**
+     * Tìm và kiểm tra chi tiết đơn hàng
+     * @param orderDetailId ID của chi tiết đơn hàng
+     * @param orderId ID của đơn hàng
+     * @return Chi tiết đơn hàng nếu tìm thấy và hợp lệ
+     * @throws NotFoundException nếu không tìm thấy chi tiết đơn hàng
+     * @throws OrderException nếu chi tiết đơn hàng không thuộc về đơn hàng
+     */
+    private OrderDetail findAndValidateOrderDetail(Long orderDetailId, Long orderId) {
+        OrderDetail detail = orderDetailRepository.findById(orderDetailId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy chi tiết đơn hàng"));
+        
+        if (!detail.getOrders().getId().equals(orderId)) {
+            throw new OrderException("Chi tiết đơn hàng không thuộc về đơn hàng này");
+        }
+        
+        return detail;
+    }
 }
