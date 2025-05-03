@@ -148,4 +148,6 @@ public class GlobalException {
         msg.put("details", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
     }
+
+
 }

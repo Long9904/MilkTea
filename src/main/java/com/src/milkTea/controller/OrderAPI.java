@@ -30,9 +30,10 @@ public class OrderAPI {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) String staffName
+            @RequestParam(required = false) String staffName,
+            @RequestParam(required = false) String paymentMethod
     ) {
-        return ResponseEntity.ok(orderService.getAllOrders(minPrice, maxPrice, status, staffName, pageable));
+        return ResponseEntity.ok(orderService.getAllOrders(minPrice, maxPrice, status, staffName, paymentMethod ,pageable));
     }
 
     @Operation(summary = "Get order details by id")
