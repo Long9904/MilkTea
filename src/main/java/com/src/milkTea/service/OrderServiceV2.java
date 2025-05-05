@@ -528,20 +528,20 @@ public class OrderServiceV2 {
      * Cập nhật chi tiết của sản phẩm đơn (size và số lượng)
      */
     private double updateSingleItemDetails(OrderDetail orderDetail, String size, int newQuantity) {
+        int oldQuantity = orderDetail.getQuantity(); // Lưu số lượng cũ
+        
         // Cập nhật thông tin sản phẩm chính
         orderDetail.setQuantity(newQuantity);
         orderDetail.setSize(ProducSizeEnum.valueOf(size));
         orderDetail.setUnitPrice(calculatePriceBySize(orderDetail.getProduct().getBasePrice(), size));
-        
+
         double totalPrice = orderDetail.getUnitPrice() * newQuantity;
 
         // Cập nhật số lượng của các topping
         if (orderDetail.getChildren() != null) {
             for (OrderDetail topping : orderDetail.getChildren()) {
-                // Lấy số lượng topping trên mỗi ly từ số lượng hiện tại
-                int toppingPerItem = topping.getQuantity() / orderDetail.getQuantity();
-                // Tính số lượng topping mới = số topping/ly × số ly mới
-                int toppingNewQuantity = toppingPerItem * newQuantity;
+                // Tính số lượng topping mới dựa trên tỷ lệ với số lượng cũ
+                int toppingNewQuantity = (topping.getQuantity() * newQuantity) / oldQuantity;
                 
                 topping.setQuantity(toppingNewQuantity);
                 orderDetailRepository.save(topping);
