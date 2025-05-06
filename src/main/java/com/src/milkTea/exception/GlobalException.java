@@ -149,5 +149,21 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
     }
 
+    // Xử lí lỗi két tiền
+    @ExceptionHandler(CashDrawerException.class)
+    public ResponseEntity<Map<String, Object>> handleCashDrawerException(CashDrawerException ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("message", "error");
+        msg.put("details", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(msg);
+    }
 
 }

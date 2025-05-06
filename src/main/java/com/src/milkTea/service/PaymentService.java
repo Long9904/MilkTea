@@ -4,13 +4,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.src.milkTea.dto.request.MomoIPNRequest;
 import com.src.milkTea.dto.request.MomoPaymentRequest;
+import com.src.milkTea.entities.CashDrawer;
 import com.src.milkTea.entities.Orders;
 import com.src.milkTea.entities.Payment;
 import com.src.milkTea.enums.OrderStatusEnum;
 import com.src.milkTea.enums.PaymentMethodEnum;
 import com.src.milkTea.enums.TransactionEnum;
+import com.src.milkTea.exception.CashDrawerException;
 import com.src.milkTea.exception.NotFoundException;
+import com.src.milkTea.exception.OrderException;
 import com.src.milkTea.exception.TransactionException;
+import com.src.milkTea.repository.CashDrawerRepository;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.PaymentRepository;
 import com.src.milkTea.utils.MomoSignatureUtil;
@@ -24,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -56,6 +61,9 @@ public class PaymentService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private CashDrawerRepository cashDrawerRepository;
 
     @Transactional
     public Map<String, Object> createMomoPayment(Long orderId, String paymentMethod) throws Exception {
@@ -253,58 +261,47 @@ public class PaymentService {
      */
     @Transactional
     public Map<String, Object> paymentWithCash(Long orderId) {
-        // Kiểm tra và lấy thông tin đơn hàng
+        // 1. Kiểm tra két tiền
+        CashDrawer drawer = cashDrawerRepository.findByDateAndIsOpenTrue(LocalDate.now())
+            .orElseThrow(() -> new CashDrawerException("Cash drawer is not open"));
+
+
+        // 2. Kiểm tra và lấy thông tin đơn hàng
         Orders order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+            .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        // Kiểm tra trạng thái đơn hàng
-        if (order.getStatus() == OrderStatusEnum.PAID) {
-            return Map.of("message", "Order has been paid!");
-        }
         if (order.getStatus() != OrderStatusEnum.PENDING) {
-            throw new TransactionException("Order is not in pending status");
+            throw new OrderException("Order status must be PENDING to proceed with cash payment");
         }
 
-        // Kiểm tra payment hiện tại
-        Optional<Payment> paymentOptional = paymentRepository.findByOrderId(orderId);
-        if (paymentOptional.isPresent()) {
-            Payment payment = paymentOptional.get();
-            if (payment.getStatus() == TransactionEnum.SUCCESS) {
-                return Map.of("message", "Order has been paid!");
-            }
-            // Kiểm tra nếu đang có payment method khác đang xử lý
-            if (payment.getStatus() == TransactionEnum.PENDING && payment.getPaymentMethod() != PaymentMethodEnum.CASH) {
-                throw new TransactionException("Order is being processed via " + payment.getPaymentMethod());
-            }
-            // Cập nhật payment hiện tại
-            payment.setStatus(TransactionEnum.SUCCESS);
-            payment.setPaymentMethod(PaymentMethodEnum.CASH);
-            paymentRepository.save(payment);
-        } else {
-            // Tạo payment mới
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyy'T'HHmmss");
-            String formatted = now.format(formatter);
-            String requestId = orderId + "ORDER" + formatted;
+        // 3. Tính toán số tiền
+        double orderAmount = order.getTotalPrice();
 
-            Payment payment = new Payment();
-            payment.setOrder(order);
-            payment.setRequestId(requestId);
-            payment.setAmount(String.valueOf((int) order.getTotalPrice()));
-            payment.setStatus(TransactionEnum.SUCCESS);
-            payment.setPaymentMethod(PaymentMethodEnum.CASH);
-            payment.setMessage("Cash payment successful");
-            paymentRepository.save(payment);
-        }
 
-        // Cập nhật trạng thái đơn hàng, chuyển sang trạng thái đang chuẩn bị
+        // 5. Tạo payment mới
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(String.valueOf((int)orderAmount));
+        payment.setStatus(TransactionEnum.SUCCESS);
+        payment.setPaymentMethod(PaymentMethodEnum.CASH);
+        payment.setCashDrawer(drawer);
+        payment.setMessage("Thanh toán tiền mặt thành công");
+        paymentRepository.save(payment);
+
+        // 6. Cập nhật số dư két
+        drawer.setCurrentBalance(drawer.getCurrentBalance() + orderAmount);
+        cashDrawerRepository.save(drawer);
+
+        // 7. Cập nhật trạng thái đơn hàng
         order.setStatus(OrderStatusEnum.PREPARING);
         orderRepository.save(order);
 
+        // 8. Trả về kết quả
         return Map.of(
-            "message", "Cash payment successful!",
+            "message", "Thanh toán thành công, vui lòng chờ nhận hàng!",
             "orderId", orderId,
-            "amount", order.getTotalPrice(),
+            "orderAmount", orderAmount,
+            "drawerBalance", drawer.getCurrentBalance(),
             "status", "SUCCESS"
         );
     }
