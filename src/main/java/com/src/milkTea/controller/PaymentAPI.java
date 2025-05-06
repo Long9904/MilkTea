@@ -33,10 +33,10 @@ public class PaymentAPI {
         // Xây dựng URL redirect với các tham số từ MOMO
         String baseUrl = "https://swp-3-w.vercel.app"; // URL của frontend
         StringBuilder redirectUrl = new StringBuilder(baseUrl + "/staff/cart?");
-        
+
         // Thêm các tham số quan trọng vào URL
         redirectUrl.append("status=").append("success");
-        
+
         if (params.containsKey("orderId")) {
             redirectUrl.append("&orderId=").append(params.get("orderId"));
         }
@@ -74,7 +74,7 @@ public class PaymentAPI {
 
 
     // Momo payment success callback
-    @Operation (summary = "Momo payment status callback")
+    @Operation(summary = "Momo payment status callback")
     @PostMapping("/momo/ipn")
     public ResponseEntity<String> momoNotify(@RequestBody MomoIPNRequest request) {
         paymentService.processMomoIPN(request);
@@ -82,7 +82,7 @@ public class PaymentAPI {
     }
 
     // Update payment status
-    @Operation (summary = "Update payment status")
+    @Operation(summary = "Update payment status")
     @PutMapping("/{orderId}/status")
     public ResponseEntity<?> updatePaymentStatus(@PathVariable String orderId, @RequestParam String status) {
         paymentService.updatePaymentStatus(orderId, status);
@@ -90,7 +90,7 @@ public class PaymentAPI {
     }
 
     // Resend payment request
-    @Operation (summary = "Resend payment request")
+    @Operation(summary = "Resend payment request")
     @PostMapping("/re-momo")
     public ResponseEntity<?> resendPaymentRequest(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.reMomoPayment(
@@ -99,16 +99,22 @@ public class PaymentAPI {
     }
 
     // Payment with cash
-    @Operation (summary = "Payment with cash")
+    @Operation(summary = "Payment with cash")
     @PostMapping("/cash")
-    public ResponseEntity<?> paymentWithCash(@RequestBody PaymentRequest paymentRequest) throws Exception {
+    public ResponseEntity<?> paymentWithCash(@RequestBody PaymentRequest request) {
+        // Validate the payment method
+        if (!request.getPaymentMethod().equals("CASH")) {
+            return ResponseEntity.badRequest().body("Invalid payment method");
+        }
         Map<String, Object> result = paymentService.paymentWithCash(
-                paymentRequest.getOrderId());
+                request.getOrderId()
+        );
         return ResponseEntity.ok(result);
     }
 
+
     // Switch payment method (momo to cash)
-    @Operation (summary = "Switch payment method (momo to cash)")
+    @Operation(summary = "Switch payment method (momo to cash)")
     @PutMapping("/switch")
     public ResponseEntity<?> switchPaymentMethod(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.switchToPaymentWithCash(

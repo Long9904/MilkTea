@@ -39,6 +39,11 @@ public class Payment {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Liên kết với CashDrawer
+    @ManyToOne
+    @JoinColumn(name = "cash_drawer_id", referencedColumnName = "id")
+    private CashDrawer cashDrawer; // cash drawer id from CashDrawer table
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
