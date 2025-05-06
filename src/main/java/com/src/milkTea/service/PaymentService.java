@@ -145,9 +145,8 @@ public class PaymentService {
             transaction.setStatus(TransactionEnum.SUCCESS);
             // Thực hiện các hành động cần thiết sau khi thanh toán thành công
             // Update order status
-            System.out.println("Payment successful for order ID: " + orderId);
             Orders order = orderRepository.findById(Long.valueOf(orderId)).orElseThrow(() -> new NotFoundException("Order not found"));
-            order.setStatus(OrderStatusEnum.PAID);
+            order.setStatus(OrderStatusEnum.PREPARING);
             orderRepository.save(order);
             System.out.println("Order status updated to PAID for order ID: " + orderId);
         } else {
@@ -298,8 +297,8 @@ public class PaymentService {
             paymentRepository.save(payment);
         }
 
-        // Cập nhật trạng thái đơn hàng
-        order.setStatus(OrderStatusEnum.PAID);
+        // Cập nhật trạng thái đơn hàng, chuyển sang trạng thái đang chuẩn bị
+        order.setStatus(OrderStatusEnum.PREPARING);
         orderRepository.save(order);
 
         return Map.of(

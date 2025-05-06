@@ -12,6 +12,7 @@ import com.src.milkTea.entities.Product;
 import com.src.milkTea.enums.*;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.ProductException;
+import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.*;
 import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
@@ -271,17 +272,31 @@ public class OrderService {
     }
 
     public void updateOrderStatus(Long id, String status) {
+
+        // Validate order status
+        if (status == null || status.isEmpty()) {
+            throw new NotFoundException("Order status not found");
+        }
+        // Validate status
+        if (Arrays.stream(OrderStatusEnum.values()).noneMatch(s -> s.name().equalsIgnoreCase(status))) {
+            throw new StatusException("Status must be one of the following: " +
+                    Arrays.toString(OrderStatusEnum.values()));
+        }
         Orders order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status);
         if (orderStatus == OrderStatusEnum.CANCELLED) {
             order.setStatus(OrderStatusEnum.CANCELLED);
-        } else if (orderStatus == OrderStatusEnum.CONFIRMED) {
-            order.setStatus(OrderStatusEnum.CONFIRMED);
+        } else if (orderStatus == OrderStatusEnum.DELIVERED) {
+            order.setStatus(OrderStatusEnum.DELIVERED);
         } else if (orderStatus == OrderStatusEnum.PAID) {
             order.setStatus(OrderStatusEnum.PAID);
+        } else if (orderStatus == OrderStatusEnum.PENDING) {
+            order.setStatus(OrderStatusEnum.PENDING);
+        } else if (orderStatus == OrderStatusEnum.PREPARING) {
+            order.setStatus(OrderStatusEnum.PREPARING);
         } else {
-            throw new ProductException("Invalid order status");
+            throw new NotFoundException("Order status not found");
         }
         orderRepository.save(order);
         // Update payment too
