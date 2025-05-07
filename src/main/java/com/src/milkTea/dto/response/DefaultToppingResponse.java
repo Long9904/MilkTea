@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class DefaultToppingResponse {
     private Long toppingId;
     private String toppingName;
+    private String toppingImage;
     private int quantity;
 }

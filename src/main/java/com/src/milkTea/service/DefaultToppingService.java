@@ -91,6 +91,9 @@ public class DefaultToppingService {
             defaultToppingResponse.setToppingId(defaultTopping.getTopping().getId());
             defaultToppingResponse.setToppingName(defaultTopping.getTopping().getName());
             defaultToppingResponse.setQuantity(defaultTopping.getQuantity());
+            Product product = productRepository.findById(defaultTopping.getTopping().getId()).
+                    orElseThrow(() -> new NotFoundException("Topping not found"));
+            defaultToppingResponse.setToppingImage(product.getImageUrl());
             return defaultToppingResponse;
         }).toList();
     }
@@ -98,7 +101,7 @@ public class DefaultToppingService {
     public ProductResponseV2 getProductWithDefaultToppingByProductId(Long productId) {
         Product product = productRepository.findById(productId).
                 orElseThrow(() -> new NotFoundException("Product not found"));
-        ProductResponseV2 productResponseV2 = modelMapper.map(product, ProductResponseV2.class);
+        ProductResponseV2 productResponseV2 =  convertToProductResponse(product);
         // Lấy default topping của product
         List<DefaultTopping> defaultToppings = defaultToppingRepository.findAllByProductId(productId);
         // Chuyển đổi defaultTopping sang DefaultToppingResponse
@@ -107,9 +110,22 @@ public class DefaultToppingService {
             defaultToppingResponse.setToppingId(defaultTopping.getTopping().getId());
             defaultToppingResponse.setToppingName(defaultTopping.getTopping().getName());
             defaultToppingResponse.setQuantity(defaultTopping.getQuantity());
+            defaultToppingResponse.setToppingImage(defaultTopping.getTopping().getImageUrl());
             return defaultToppingResponse;
         }).toList();
         productResponseV2.setDefaultToppings(defaultToppingResponses);
+
         return productResponseV2;
+    }
+
+    private ProductResponseV2 convertToProductResponse(Product product) {
+        // Convert Product to ProductResponse
+        ProductResponseV2 response = modelMapper.map(product, ProductResponseV2.class);
+        // Map id and name of the category to ProductResponse
+        if (product.getCategory() != null) {
+            response.setCategoryId(product.getCategory().getId());
+            response.setCategoryName(product.getCategory().getName());
+        }
+        return response;
     }
 }
