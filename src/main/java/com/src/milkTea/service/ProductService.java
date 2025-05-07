@@ -50,6 +50,7 @@ public class ProductService {
     @Autowired
     private ComboDetailRepository comboDetailRepository;
 
+    @Transactional
     public ProductResponse createProduct(ProductRequest productRequest) {
         // Check duplicate name and product code
         List<String> duplicates = new ArrayList<>();
@@ -63,7 +64,8 @@ public class ProductService {
             throw new DuplicateException(duplicates);
         }
         // Check if category exists or not
-        Category category = categoryRepository.findById(productRequest.getCategoryId()).orElseThrow(() -> new NotFoundException("Category not found"));
+        Category category = categoryRepository.findById(productRequest.getCategoryId()).orElseThrow(()
+                -> new NotFoundException("Category not found"));
 
         // Convert ProductRequest to Product entity and map the category
         Product product = modelMapper.map(productRequest, Product.class);
@@ -96,6 +98,7 @@ public class ProductService {
         productRepository.save(existingProduct);
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long productId, ProductRequest productRequest) {
         // Check if the product exists
         Product existingProduct = productRepository.findById(productId).orElseThrow(()

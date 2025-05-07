@@ -11,11 +11,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProductResponse {
+public class ProductResponseV2 {
     private Long id;
     private String name;
     private Double basePrice;
@@ -45,4 +46,5 @@ public class ProductResponse {
 
     private String categoryName;
 
+    private List<DefaultToppingResponse> defaultToppings;
 }
