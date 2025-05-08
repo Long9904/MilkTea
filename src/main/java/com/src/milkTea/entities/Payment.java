@@ -44,6 +44,11 @@ public class Payment {
     @JoinColumn(name = "cash_drawer_id", referencedColumnName = "id")
     private CashDrawer cashDrawer; // cash drawer id from CashDrawer table
 
+    // Liên kết với promotion
+    @ManyToOne
+    @JoinColumn(name = "promotion_id", referencedColumnName = "id")
+    private Promotion promotion;
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();

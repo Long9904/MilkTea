@@ -89,6 +89,7 @@ public class PaymentService {
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setRequestId(requestId);
+        // Xử lí promotion cho payment
         payment.setAmount(amount);
         payment.setStatus(TransactionEnum.PENDING);
         payment.setPaymentMethod(PaymentMethodEnum.MOMO);

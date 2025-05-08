@@ -60,7 +60,6 @@ public class CashDrawerService {
     }
 
     public CashDrawer getCurrentDrawerStatus() {
-
         return getCurrentDrawer();
 
     }

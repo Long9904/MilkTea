@@ -66,7 +66,7 @@ public class DefaultToppingService {
 
         // Xóa default topping cũ
         defaultToppingRepository.deleteAllByProductId(productId);
-        // Lưu default topping mới giống như hàm tạo product
+        // Lưu default topping mới giống như hàm tạo product ở trên
         productRequestV2.getDefaultToppings().forEach(defaultTopping -> {
             Product product = productRepository.findById(productResponse.getId()).
                     orElseThrow(() -> new NotFoundException("Product not found"));
