@@ -12,7 +12,7 @@ public class PromotionSpecification {
             if (price == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.greaterThanOrEqualTo(root.get("minTotal"), price);
+            return criteriaBuilder.lessThanOrEqualTo(root.get("minTotal"), price);
         };
     }
 }
