@@ -4,6 +4,7 @@ import com.src.milkTea.dto.request.ProductRequestV2;
 import com.src.milkTea.service.DefaultToppingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class ProductAPIV2 {
     // Tạo 1 product kèm default topping
     @Operation(summary = "Create product with default topping")
     @PostMapping
-    public ResponseEntity<?> createProductWithDefaultTopping(@RequestBody ProductRequestV2 productRequestV2) {
+    public ResponseEntity<?> createProductWithDefaultTopping(@Valid @RequestBody ProductRequestV2 productRequestV2) {
         defaultToppingService.createProductWithDefaultTopping(productRequestV2);
         return ResponseEntity.ok("Create product with default topping successfully");
     }
