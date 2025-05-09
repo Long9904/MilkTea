@@ -28,8 +28,9 @@ public class PromotionAPI {
 
     @Operation(summary = "Get all promotions")
     @GetMapping("/all")
-    public ResponseEntity<?> getAllPromotions(@ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(promotionService.getAllPromotions(pageable));
+    public ResponseEntity<?> getAllPromotions(@ParameterObject Pageable pageable,
+                                              @RequestParam (required = false) Double price) {
+        return ResponseEntity.ok(promotionService.getAllPromotions(pageable, price));
 
     }
 

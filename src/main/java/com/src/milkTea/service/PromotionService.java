@@ -12,12 +12,14 @@ import com.src.milkTea.exception.ProductException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.PromotionRepository;
+import com.src.milkTea.specification.PromotionSpecification;
 import com.src.milkTea.utils.DateTimeUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -102,8 +104,11 @@ public class PromotionService {
     }
 
     // Get all promotions by Pagination
-    public PagingResponse<PromotionResponse> getAllPromotions(Pageable pageable) {
-        Page<Promotion> promotions = promotionRepository.findAll(pageable);
+    public PagingResponse<PromotionResponse> getAllPromotions(Pageable pageable, Double price) {
+
+        Specification<Promotion> spec = Specification.where(PromotionSpecification.priceMoreThan(price));
+
+        Page<Promotion> promotions = promotionRepository.findAll(spec, pageable);
         // Convert Page<Promotion> to Page<PromotionResponse>
         List<PromotionResponse> promotionResponses = promotions.getContent().stream()
                 .map(promotion -> modelMapper.map(promotion, PromotionResponse.class))
@@ -138,7 +143,7 @@ public class PromotionService {
         }
         // Check if the order total is greater than or equal to the promotion minTotal
         if (order.getTotalPrice() < promotion.getMinTotal()) {
-           return false;
+            return false;
         }
         return true;
     }
