@@ -5,10 +5,7 @@ import com.src.milkTea.dto.request.OrderRequest;
 import com.src.milkTea.dto.response.OrderDetailResponse;
 import com.src.milkTea.dto.response.OrderResponse;
 import com.src.milkTea.dto.response.PagingResponse;
-import com.src.milkTea.entities.OrderDetail;
-import com.src.milkTea.entities.Orders;
-import com.src.milkTea.entities.Payment;
-import com.src.milkTea.entities.Product;
+import com.src.milkTea.entities.*;
 import com.src.milkTea.enums.*;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.ProductException;
@@ -222,13 +219,27 @@ public class OrderService {
 
     private OrderResponse convertToOrderResponse(Orders order) {
         OrderResponse orderResponse = modelMapper.map(order, OrderResponse.class);
+        
+        // Map user info
         if (order.getUser() != null) {
             orderResponse.setUserId(order.getUser().getId());
             orderResponse.setUserName(order.getUser().getFullName());
         }
+        
+        // Map payment and promotion info
         if (order.getPayment() != null) {
-            orderResponse.setPaymentMethod(order.getPayment().getPaymentMethod().toString());
+            Payment payment = order.getPayment();
+            orderResponse.setPaymentMethod(payment.getPaymentMethod().toString());
+            orderResponse.setAmountPaid(payment.getAmount());
+            
+            // Map promotion info if exists
+            if (payment.getPromotion() != null) {
+                Promotion promotion = payment.getPromotion();
+                orderResponse.setDiscountCode(promotion.getCode());
+                orderResponse.setDiscountPercent(promotion.getDiscountPercent());
+            }
         }
+        
         return orderResponse;
     }
 

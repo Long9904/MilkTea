@@ -106,8 +106,8 @@ public class PaymentService {
 
             if (promotion.isPresent()) {
                 // Kiểm tra có thể áp dụng khuyến mãi không
-                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
-                    throw new TransactionException("Promotion is not valid");
+                if (!promotionService.checkPromotion(promotion.get().getId(), orderId)) {
+                    throw new TransactionException("Cannot apply this promotion");
                 }
                 payment.setPromotion(promotion.get());
                 // Tính toán lại số tiền sau khi áp dụng khuyến mãi
@@ -176,13 +176,15 @@ public class PaymentService {
         String orderId = customOrderId.split("T")[0];  // "123"
         String resultCode = request.getResultCode();
 
-        Payment transaction = paymentRepository.findByOrderId(Long.parseLong(orderId)).orElseThrow(() -> new NotFoundException("Order not found"));
+        Payment transaction = paymentRepository.findByOrderId(Long.parseLong(orderId)).orElseThrow(()
+                -> new NotFoundException("Order not found"));
 
         if ("0".equals(resultCode)) {
             transaction.setStatus(TransactionEnum.SUCCESS);
             // Thực hiện các hành động cần thiết sau khi thanh toán thành công
             // Update order status
-            Orders order = orderRepository.findById(Long.valueOf(orderId)).orElseThrow(() -> new NotFoundException("Order not found"));
+            Orders order = orderRepository.findById(Long.valueOf(orderId)).orElseThrow(()
+                    -> new NotFoundException("Order not found"));
             order.setStatus(OrderStatusEnum.PREPARING);
             orderRepository.save(order);
             System.out.println("Order status updated to PAID for order ID: " + orderId);
@@ -213,7 +215,8 @@ public class PaymentService {
             return Map.of("message", "Order has been paid!");
         }
 
-        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(() -> new NotFoundException("Payment not found"));
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(()
+                -> new NotFoundException("Payment not found"));
         if (payment.getStatus() == TransactionEnum.SUCCESS) {
             return Map.of("message", "Order has been paid!");
         }
@@ -226,8 +229,8 @@ public class PaymentService {
             if (promotion.isPresent()) {
 
                 // Kiểm tra có thể áp dụng khuyến mãi không
-                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
-                    throw new TransactionException("Promotion is not valid");
+                if (!promotionService.checkPromotion(promotion.get().getId(), orderId)) {
+                    throw new TransactionException("Cannot apply this promotion");
                 }
 
                 payment.setPromotion(promotion.get());
@@ -339,8 +342,8 @@ public class PaymentService {
             if (promotion.isPresent()) {
 
                 // Kiểm tra có thể áp dụng khuyến mãi không
-                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
-                    throw new TransactionException("Promotion is not valid");
+                if (!promotionService.checkPromotion(promotion.get().getId(), orderId)) {
+                    throw new TransactionException("Cannot apply this promotion");
                 }
 
                 payment.setPromotion(promotion.get());
