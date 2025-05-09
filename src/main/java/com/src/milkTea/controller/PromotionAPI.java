@@ -3,6 +3,7 @@ package com.src.milkTea.controller;
 import com.src.milkTea.dto.request.PromotionRequest;
 import com.src.milkTea.service.PromotionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
@@ -21,7 +22,7 @@ public class PromotionAPI {
 
     @Operation(summary = "Create a new promotion")
     @PostMapping
-    public ResponseEntity<?> createPromotion(@Valid PromotionRequest promotionRequest) {
+    public ResponseEntity<?> createPromotion(@Valid @RequestBody PromotionRequest promotionRequest) {
         promotionService.createPromotion(promotionRequest);
         return ResponseEntity.ok("Promotion created successfully");
     }
@@ -41,7 +42,7 @@ public class PromotionAPI {
 
     @Operation(summary = "Update a promotion")
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePromotion(@PathVariable Long id, @Valid PromotionRequest promotionRequest) {
+    public ResponseEntity<?> updatePromotion(@PathVariable Long id, @Valid @RequestBody PromotionRequest promotionRequest) {
         promotionService.updatePromotion(id, promotionRequest);
         return ResponseEntity.ok("Promotion updated successfully");
     }
