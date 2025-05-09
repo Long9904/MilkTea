@@ -19,6 +19,9 @@ public class PromotionRequest {
     @NotNull(message = "name cannot be null")
     private String name;
 
+    @NotNull(message = "code cannot be null")
+    private String code; // Mã khuyến mãi
+
     private String description;
 
     @Min(value = 0, message = "minTotal must be greater than or equal to 0")

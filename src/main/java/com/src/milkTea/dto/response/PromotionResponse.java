@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class PromotionResponse {
     private Long id;
     private String name;
+    private String code; // Mã khuyến mãi
     private String description;
     private double minTotal; // Điều kiện áp dụng
     private double discountPercent; // % giảm (ví dụ 10 = giảm 10%)

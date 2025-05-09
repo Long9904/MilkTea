@@ -21,6 +21,7 @@ public class Promotion {
     private Long id;
 
     private String name;
+    private String code; // Mã khuyến mãi
     private String description;
 
     private double minTotal; // Điều kiện áp dụng

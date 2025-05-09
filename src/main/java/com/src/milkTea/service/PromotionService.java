@@ -5,6 +5,7 @@ import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.PromotionResponse;
 import com.src.milkTea.entities.Promotion;
 import com.src.milkTea.enums.ProductStatusEnum;
+import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
 import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.PromotionRepository;
@@ -32,6 +33,11 @@ public class PromotionService {
     // Create a new promotion
     public void createPromotion(PromotionRequest promotionRequest) {
 
+        // Check if the promotion code already exists
+        if (promotionRepository.existsByCode(promotionRequest.getCode())) {
+            throw new DuplicateException(List.of("Promotion code already exists"));
+        }
+
         Promotion promotion = modelMapper.map(promotionRequest, Promotion.class);
 
         // Convert dateOpen and dateEnd from String to LocalDateTime
@@ -44,6 +50,12 @@ public class PromotionService {
 
     // Update an existing promotion
     public void updatePromotion(Long id, PromotionRequest promotionRequest) {
+
+        // Check if the promotion code already exists
+
+        if (promotionRepository.existsByCodeAndIdNot(promotionRequest.getCode(), id)) {
+            throw new DuplicateException(List.of("Promotion code already exists"));
+        }
 
         Promotion promotion = promotionRepository.findById(id).orElseThrow(()
                 -> new NotFoundException("Promotion not found"));
