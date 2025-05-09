@@ -629,13 +629,27 @@ public class OrderServiceV2 {
 
     private OrderResponse convertToOrderResponse(Orders order) {
         OrderResponse orderResponse = modelMapper.map(order, OrderResponse.class);
+        
+        // Map user info
         if (order.getUser() != null) {
             orderResponse.setUserId(order.getUser().getId());
             orderResponse.setUserName(order.getUser().getFullName());
         }
+        
+        // Map payment and promotion info
         if (order.getPayment() != null) {
-            orderResponse.setPaymentMethod(order.getPayment().getPaymentMethod().toString());
+            Payment payment = order.getPayment();
+            orderResponse.setPaymentMethod(payment.getPaymentMethod().toString());
+            orderResponse.setAmountPaid(payment.getAmount());
+            
+            // Map promotion info if exists
+            if (payment.getPromotion() != null) {
+                Promotion promotion = payment.getPromotion();
+                orderResponse.setDiscountCode(promotion.getCode());
+                orderResponse.setDiscountPercent(promotion.getDiscountPercent());
+            }
         }
+        
         return orderResponse;
     }
 }
