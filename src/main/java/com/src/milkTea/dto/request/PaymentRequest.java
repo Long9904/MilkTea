@@ -14,4 +14,5 @@ public class PaymentRequest {
     @Pattern( regexp = "^(MOMO|CASH)$", message = "Payment method must be either 'MOMO' or 'CASH'" )
     private String paymentMethod;
 
+    private Long promotionId;
 }

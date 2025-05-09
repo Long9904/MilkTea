@@ -3,11 +3,14 @@ package com.src.milkTea.service;
 import com.src.milkTea.dto.request.PromotionRequest;
 import com.src.milkTea.dto.response.PagingResponse;
 import com.src.milkTea.dto.response.PromotionResponse;
+import com.src.milkTea.entities.Orders;
 import com.src.milkTea.entities.Promotion;
 import com.src.milkTea.enums.ProductStatusEnum;
 import com.src.milkTea.exception.DuplicateException;
 import com.src.milkTea.exception.NotFoundException;
+import com.src.milkTea.exception.ProductException;
 import com.src.milkTea.exception.StatusException;
+import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.PromotionRepository;
 import com.src.milkTea.utils.DateTimeUtils;
 import jakarta.transaction.Transactional;
@@ -17,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +32,9 @@ public class PromotionService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
 
     // Create a new promotion
@@ -43,6 +50,12 @@ public class PromotionService {
         // Convert dateOpen and dateEnd from String to LocalDateTime
         promotion.setDateOpen(DateTimeUtils.convertStringToDate(promotionRequest.getDateOpen()));
         promotion.setDateEnd(DateTimeUtils.convertStringToDate(promotionRequest.getDateEnd()));
+
+        // Check if the promotion open date and end date are valid
+        if (promotion.getDateOpen().isAfter(promotion.getDateEnd())) {
+            throw new ProductException("Promotion open date must be before end date");
+        }
+
         promotion.setStatus(ProductStatusEnum.ACTIVE);
 
         promotionRepository.save(promotion);
@@ -89,7 +102,7 @@ public class PromotionService {
     }
 
     // Get all promotions by Pagination
-    public PagingResponse<PromotionResponse> getAllPromotions(Pageable pageable){
+    public PagingResponse<PromotionResponse> getAllPromotions(Pageable pageable) {
         Page<Promotion> promotions = promotionRepository.findAll(pageable);
         // Convert Page<Promotion> to Page<PromotionResponse>
         List<PromotionResponse> promotionResponses = promotions.getContent().stream()
@@ -106,4 +119,27 @@ public class PromotionService {
         return response;
     }
 
+    public boolean checkPromotion(Long promotionId, Long orderId) {
+        Orders order = orderRepository.findById(orderId).orElseThrow(()
+                -> new NotFoundException("Order not found"));
+
+        Promotion promotion = promotionRepository.findById(promotionId).orElseThrow(()
+                -> new NotFoundException("Promotion not found"));
+
+        if (promotion.getStatus() == ProductStatusEnum.DELETED) {
+            throw new StatusException("Promotion is not valid: " + promotion.getStatus());
+        }
+
+        // Check if the promotion open date and end date are valid
+        LocalDateTime now = LocalDateTime.now();
+        if (promotion.getDateOpen().isAfter(now) || promotion.getDateEnd().isBefore(now)) {
+            throw new ProductException("Promotion is not valid: " + promotion.getDateOpen()
+                    + " - " + promotion.getDateEnd());
+        }
+        // Check if the order total is greater than or equal to the promotion minTotal
+        if (order.getTotalPrice() < promotion.getMinTotal()) {
+            throw new StatusException("Order total is less than the promotion minTotal");
+        }
+        return true;
+    }
 }
