@@ -24,6 +24,7 @@ public class CashDrawer {
 
     private double openingBalance;    // Số dư đầu ngày
     private double currentBalance;    // Số dư hiện tại
+    private  double actualBalance;    // Số dư khi đóng két
     private boolean isOpen;
     
     @OneToMany(mappedBy = "cashDrawer")
