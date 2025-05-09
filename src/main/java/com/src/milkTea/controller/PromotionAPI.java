@@ -3,7 +3,6 @@ package com.src.milkTea.controller;
 import com.src.milkTea.dto.request.PromotionRequest;
 import com.src.milkTea.service.PromotionService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
