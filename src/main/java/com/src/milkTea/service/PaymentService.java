@@ -7,6 +7,7 @@ import com.src.milkTea.dto.request.MomoPaymentRequest;
 import com.src.milkTea.entities.CashDrawer;
 import com.src.milkTea.entities.Orders;
 import com.src.milkTea.entities.Payment;
+import com.src.milkTea.entities.Promotion;
 import com.src.milkTea.enums.OrderStatusEnum;
 import com.src.milkTea.enums.PaymentMethodEnum;
 import com.src.milkTea.enums.TransactionEnum;
@@ -17,6 +18,7 @@ import com.src.milkTea.exception.TransactionException;
 import com.src.milkTea.repository.CashDrawerRepository;
 import com.src.milkTea.repository.OrderRepository;
 import com.src.milkTea.repository.PaymentRepository;
+import com.src.milkTea.repository.PromotionRepository;
 import com.src.milkTea.utils.MomoSignatureUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +67,12 @@ public class PaymentService {
     @Autowired
     private CashDrawerRepository cashDrawerRepository;
 
+    @Autowired
+    private PromotionRepository promotionRepository;
+
+    @Autowired
+    private PromotionService promotionService;
+
     @Transactional
     public Map<String, Object> createMomoPayment(Long orderId, String paymentMethod, Long promotionId) throws Exception {
 
@@ -90,6 +98,26 @@ public class PaymentService {
         payment.setOrder(order);
         payment.setRequestId(requestId);
         // Xử lí promotion cho payment
+
+        if (promotionId != null) {
+            // Nếu có promotionId, tìm kiếm promotion và gán cho payment
+            Optional<Promotion> promotion = promotionRepository.findById(promotionId);
+            // Check có discount hay không
+
+            if (promotion.isPresent()) {
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
+                payment.setPromotion(promotion.get());
+                // Tính toán lại số tiền sau khi áp dụng khuyến mãi
+                double discount = promotion.get().getDiscountPercent();
+                amount = String.valueOf((int) (order.getTotalPrice() * (1 - discount / 100)));
+            } else {
+                throw new NotFoundException("Promotion not found");
+            }
+        }
+
         payment.setAmount(amount);
         payment.setStatus(TransactionEnum.PENDING);
         payment.setPaymentMethod(PaymentMethodEnum.MOMO);
@@ -178,7 +206,7 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
-    public Map<String, Object> reMomoPayment(Long orderId) throws Exception {
+    public Map<String, Object> reMomoPayment(Long orderId, Long promotionId) throws Exception {
 
         Orders order = orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
         if (order.getStatus() == OrderStatusEnum.PAID) {
@@ -189,7 +217,27 @@ public class PaymentService {
         if (payment.getStatus() == TransactionEnum.SUCCESS) {
             return Map.of("message", "Order has been paid!");
         }
+
         String amount = String.valueOf((int) order.getTotalPrice());
+        // Xử lí promotion cho payment
+        if (promotionId != null) {
+            // Nếu có promotionId, tìm kiếm promotion và gán cho payment
+            Optional<Promotion> promotion = promotionRepository.findById(promotionId);
+            if (promotion.isPresent()) {
+
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
+
+                payment.setPromotion(promotion.get());
+                // Tính toán lại số tiền sau khi áp dụng khuyến mãi
+                double discount = promotion.get().getDiscountPercent();
+                amount = String.valueOf((int) (order.getTotalPrice() * (1 - discount / 100)));
+            } else {
+                throw new NotFoundException("Promotion not found");
+            }
+        }
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -199,6 +247,7 @@ public class PaymentService {
         String requestId = orderId + "ORDER" + formatted; // thay bằng custom requestId (orderId + timestamp)
         String orderInfo = "Thanh toán đơn hàng #" + requestId + " tại Milk Tea: " + amount + " VNĐ";
         String extraData = "";
+
 
         payment.setRequestId(requestId); // new requestId
         payment.setAmount(amount);
@@ -261,7 +310,7 @@ public class PaymentService {
      * @throws TransactionException nếu đơn hàng không ở trạng thái hợp lệ
      */
     @Transactional
-    public Map<String, Object> paymentWithCash(Long orderId) {
+    public Map<String, Object> paymentWithCash(Long orderId, Long promotionId) {
         // 1. Kiểm tra két tiền
         CashDrawer drawer = cashDrawerRepository.findByDateAndIsOpenTrue(LocalDate.now())
             .orElseThrow(() -> new CashDrawerException("Cash drawer is not open"));
@@ -282,7 +331,28 @@ public class PaymentService {
         // 5. Tạo payment mới
         Payment payment = new Payment();
         payment.setOrder(order);
-        payment.setAmount(String.valueOf((int)orderAmount));
+
+        // Xử lí promotion cho payment
+        if (promotionId != null) {
+            // Nếu có promotionId, tìm kiếm promotion và gán cho payment
+            Optional<Promotion> promotion = promotionRepository.findById(promotionId);
+            if (promotion.isPresent()) {
+
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
+
+                payment.setPromotion(promotion.get());
+                // Tính toán lại số tiền sau khi áp dụng khuyến mãi
+                double discount = promotion.get().getDiscountPercent();
+                orderAmount = order.getTotalPrice() * (1 - discount / 100);
+            } else {
+                throw new NotFoundException("Promotion not found");
+            }
+        }
+        payment.setAmount(String.valueOf((int) orderAmount));
+
         payment.setStatus(TransactionEnum.SUCCESS);
         payment.setPaymentMethod(PaymentMethodEnum.CASH);
         payment.setCashDrawer(drawer);

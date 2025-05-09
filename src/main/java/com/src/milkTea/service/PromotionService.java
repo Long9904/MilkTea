@@ -138,7 +138,7 @@ public class PromotionService {
         }
         // Check if the order total is greater than or equal to the promotion minTotal
         if (order.getTotalPrice() < promotion.getMinTotal()) {
-            throw new StatusException("Order total is less than the promotion minTotal");
+           return false;
         }
         return true;
     }

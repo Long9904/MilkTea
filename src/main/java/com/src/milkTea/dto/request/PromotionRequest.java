@@ -30,10 +30,10 @@ public class PromotionRequest {
     private double discountPercent; // % giảm (ví dụ 10 = giảm 10%)
 
     @NotBlank(message = "dateOpen cannot be null")
-    @Schema(description = "Date format: yyyy-MM-dd HH:mm:ss", example = "2023-10-01 12:00:00")
+    @Schema(description = "Date format: yyyy/MM/dd HH:mm:ss", example = "2023/10/01 12:00:00")
     private String dateOpen;
 
     @NotBlank(message = "dateEnd cannot be null")
-    @Schema(description = "Date format: yyyy-MM-dd HH:mm:ss", example = "2023-10-31 12:00:00")
+    @Schema(description = "Date format: yyyy/MM/dd HH:mm:ss", example = "2023/10/31 12:00:00")
     private String dateEnd;
 }
