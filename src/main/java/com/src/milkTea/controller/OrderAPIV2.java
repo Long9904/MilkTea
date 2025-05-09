@@ -1,6 +1,5 @@
 package com.src.milkTea.controller;
 
-import com.src.milkTea.dto.request.OrderItemRequest;
 import com.src.milkTea.dto.request.OrderRequest;
 import com.src.milkTea.service.OrderService;
 import com.src.milkTea.service.OrderServiceV2;

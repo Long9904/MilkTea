@@ -191,14 +191,14 @@ public class OrderServiceV2 {
      * @return Chi tiết đơn hàng của combo
      */
     private OrderDetail createComboDetail(OrderItemRequest item, Orders order, Product comboProduct) {
-        OrderDetail comboDetail = new OrderDetail();
+                OrderDetail comboDetail = new OrderDetail();
         comboDetail.setOrders(order);
-        comboDetail.setProduct(comboProduct);
-        comboDetail.setQuantity(item.getQuantity());
-        comboDetail.setSize(ProducSizeEnum.NONE);
-        comboDetail.setUnitPrice(comboProduct.getBasePrice());
-        comboDetail.setCombo(true);
-        comboDetail.setNote(item.getNote());
+                comboDetail.setProduct(comboProduct);
+                comboDetail.setQuantity(item.getQuantity());
+                comboDetail.setSize(ProducSizeEnum.NONE);
+                comboDetail.setUnitPrice(comboProduct.getBasePrice());
+                comboDetail.setCombo(true);
+                comboDetail.setNote(item.getNote());
         return orderDetailRepository.save(comboDetail);
     }
 
@@ -212,16 +212,16 @@ public class OrderServiceV2 {
      */
     private void createComboChildDetail(OrderItemRequest childItem, Orders order, OrderDetail parent, int parentQuantity) {
         Product childProduct = findAndValidateChildProduct(childItem.getProductId());
-        OrderDetail childDetail = new OrderDetail();
+                    OrderDetail childDetail = new OrderDetail();
         childDetail.setOrders(order);
-        childDetail.setProduct(childProduct);
+                    childDetail.setProduct(childProduct);
         childDetail.setParent(parent);
         // Số lượng = số lượng yêu cầu * số lượng combo
         childDetail.setQuantity(childItem.getQuantity() * parentQuantity);
-        childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
         childDetail.setUnitPrice(0); // Sản phẩm con trong combo có giá = 0
-        childDetail.setCombo(false);
-        childDetail.setNote(childItem.getNote());
+                    childDetail.setCombo(false);
+                    childDetail.setNote(childItem.getNote());
         orderDetailRepository.save(childDetail);
     }
 
@@ -292,17 +292,17 @@ public class OrderServiceV2 {
      */
     private double createToppingDetail(OrderItemRequest toppingItem, Orders order, OrderDetail parent, int parentQuantity) {
         Product toppingProduct = findAndValidateTopping(toppingItem.getProductId());
-        OrderDetail toppingDetail = new OrderDetail();
+                        OrderDetail toppingDetail = new OrderDetail();
         // Số lượng topping = số lượng yêu cầu * số lượng sản phẩm chính
         toppingDetail.setQuantity(toppingItem.getQuantity() * parentQuantity);
-        toppingDetail.setSize(ProducSizeEnum.NONE);
-        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
+                        toppingDetail.setSize(ProducSizeEnum.NONE);
+                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
         toppingDetail.setProduct(toppingProduct);
         toppingDetail.setOrders(order);
         toppingDetail.setParent(parent);
-        toppingDetail.setCombo(false);
-        toppingDetail.setNote(toppingItem.getNote());
-        orderDetailRepository.save(toppingDetail);
+                        toppingDetail.setCombo(false);
+                        toppingDetail.setNote(toppingItem.getNote());
+                        orderDetailRepository.save(toppingDetail);
 
         return toppingDetail.getUnitPrice() * toppingDetail.getQuantity();
     }
@@ -477,7 +477,7 @@ public class OrderServiceV2 {
         } else if (orderDetail.getParent() == null) {
             // Cập nhật sản phẩm đơn
             newPrice = updateSingleItemDetails(orderDetail, size, quantity);
-        } else {
+            } else {
             throw new OrderException("Không thể cập nhật topping hoặc sản phẩm con trong combo");
         }
 

@@ -95,7 +95,8 @@ public class PaymentAPI {
     @PostMapping("/re-momo")
     public ResponseEntity<?> resendPaymentRequest(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.reMomoPayment(
-                paymentRequest.getOrderId());
+                paymentRequest.getOrderId(),
+                paymentRequest.getPromotionId());
         return ResponseEntity.ok(result);
     }
 
@@ -108,7 +109,8 @@ public class PaymentAPI {
             return ResponseEntity.badRequest().body("Invalid payment method");
         }
         Map<String, Object> result = paymentService.paymentWithCash(
-                request.getOrderId()
+                request.getOrderId(),
+                request.getPromotionId()
         );
         return ResponseEntity.ok(result);
     }

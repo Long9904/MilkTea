@@ -36,5 +36,11 @@ public class OrderResponse {
     private String userName;
 
     private String paymentMethod;
+//
+//    private String amountPaid;
+//
+//    private String discountCode;
+//
+//    private double discountPercent;
 }
 
