@@ -50,6 +50,7 @@ public class CashDrawerService {
         double difference = actualAmount - drawer.getCurrentBalance();
         
         drawer.setOpen(false);
+        drawer.setActualBalance(actualAmount);
         drawer.setClosedAt(LocalDateTime.now());
         drawer.setNote(String.format("Chênh lệch: %,.0f VND. %s", 
             difference, 
