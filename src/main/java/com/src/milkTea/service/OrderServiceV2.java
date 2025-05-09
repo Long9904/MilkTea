@@ -57,6 +57,7 @@ public class OrderServiceV2 {
 
     /**
      * Thêm sản phẩm vào giỏ hàng mới
+     *
      * @param orderRequest Request chứa thông tin các sản phẩm cần thêm
      * @return Đơn hàng mới được tạo
      */
@@ -191,14 +192,14 @@ public class OrderServiceV2 {
      * @return Chi tiết đơn hàng của combo
      */
     private OrderDetail createComboDetail(OrderItemRequest item, Orders order, Product comboProduct) {
-                OrderDetail comboDetail = new OrderDetail();
+        OrderDetail comboDetail = new OrderDetail();
         comboDetail.setOrders(order);
-                comboDetail.setProduct(comboProduct);
-                comboDetail.setQuantity(item.getQuantity());
-                comboDetail.setSize(ProducSizeEnum.NONE);
-                comboDetail.setUnitPrice(comboProduct.getBasePrice());
-                comboDetail.setCombo(true);
-                comboDetail.setNote(item.getNote());
+        comboDetail.setProduct(comboProduct);
+        comboDetail.setQuantity(item.getQuantity());
+        comboDetail.setSize(ProducSizeEnum.NONE);
+        comboDetail.setUnitPrice(comboProduct.getBasePrice());
+        comboDetail.setCombo(true);
+        comboDetail.setNote(item.getNote());
         return orderDetailRepository.save(comboDetail);
     }
 
@@ -212,16 +213,16 @@ public class OrderServiceV2 {
      */
     private void createComboChildDetail(OrderItemRequest childItem, Orders order, OrderDetail parent, int parentQuantity) {
         Product childProduct = findAndValidateChildProduct(childItem.getProductId());
-                    OrderDetail childDetail = new OrderDetail();
+        OrderDetail childDetail = new OrderDetail();
         childDetail.setOrders(order);
-                    childDetail.setProduct(childProduct);
+        childDetail.setProduct(childProduct);
         childDetail.setParent(parent);
         // Số lượng = số lượng yêu cầu * số lượng combo
         childDetail.setQuantity(childItem.getQuantity() * parentQuantity);
-                    childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
+        childDetail.setSize(ProducSizeEnum.valueOf(childItem.getSize()));
         childDetail.setUnitPrice(0); // Sản phẩm con trong combo có giá = 0
-                    childDetail.setCombo(false);
-                    childDetail.setNote(childItem.getNote());
+        childDetail.setCombo(false);
+        childDetail.setNote(childItem.getNote());
         orderDetailRepository.save(childDetail);
     }
 
@@ -292,17 +293,17 @@ public class OrderServiceV2 {
      */
     private double createToppingDetail(OrderItemRequest toppingItem, Orders order, OrderDetail parent, int parentQuantity) {
         Product toppingProduct = findAndValidateTopping(toppingItem.getProductId());
-                        OrderDetail toppingDetail = new OrderDetail();
+        OrderDetail toppingDetail = new OrderDetail();
         // Số lượng topping = số lượng yêu cầu * số lượng sản phẩm chính
         toppingDetail.setQuantity(toppingItem.getQuantity() * parentQuantity);
-                        toppingDetail.setSize(ProducSizeEnum.NONE);
-                        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
+        toppingDetail.setSize(ProducSizeEnum.NONE);
+        toppingDetail.setUnitPrice(toppingProduct.getBasePrice());
         toppingDetail.setProduct(toppingProduct);
         toppingDetail.setOrders(order);
         toppingDetail.setParent(parent);
-                        toppingDetail.setCombo(false);
-                        toppingDetail.setNote(toppingItem.getNote());
-                        orderDetailRepository.save(toppingDetail);
+        toppingDetail.setCombo(false);
+        toppingDetail.setNote(toppingItem.getNote());
+        orderDetailRepository.save(toppingDetail);
 
         return toppingDetail.getUnitPrice() * toppingDetail.getQuantity();
     }
@@ -440,10 +441,11 @@ public class OrderServiceV2 {
 
     /**
      * Cập nhật size và số lượng của chi tiết đơn hàng
-     * @param orderId ID của đơn hàng
+     *
+     * @param orderId       ID của đơn hàng
      * @param orderDetailId ID của chi tiết đơn hàng cần cập nhật
-     * @param size Size mới của sản phẩm
-     * @param quantity Số lượng mới
+     * @param size          Size mới của sản phẩm
+     * @param quantity      Số lượng mới
      * @return Chi tiết đơn hàng sau khi cập nhật
      */
     @Transactional
@@ -477,7 +479,7 @@ public class OrderServiceV2 {
         } else if (orderDetail.getParent() == null) {
             // Cập nhật sản phẩm đơn
             newPrice = updateSingleItemDetails(orderDetail, size, quantity);
-            } else {
+        } else {
             throw new OrderException("Không thể cập nhật topping hoặc sản phẩm con trong combo");
         }
 
@@ -502,16 +504,16 @@ public class OrderServiceV2 {
     private double updateComboQuantity(OrderDetail comboDetail, int newQuantity) {
         // Cập nhật số lượng của combo
         comboDetail.setQuantity(newQuantity);
-        
+
         // Cập nhật số lượng của các sản phẩm con
         if (comboDetail.getChildren() != null) {
             for (OrderDetail child : comboDetail.getChildren()) {
                 // Lấy quantity gốc từ ComboDetail
                 ComboDetail originalComboDetail = comboDetailRepository.findByComboAndChildProduct(
-                    comboDetail.getProduct(), 
-                    child.getProduct()
+                        comboDetail.getProduct(),
+                        child.getProduct()
                 );
-                
+
                 if (originalComboDetail != null) {
                     // Tính lại số lượng mới = quantity gốc từ ComboDetail × số lượng combo mới
                     child.setQuantity(originalComboDetail.getQuantity() * newQuantity);
@@ -519,7 +521,7 @@ public class OrderServiceV2 {
                 }
             }
         }
-        
+
         orderDetailRepository.save(comboDetail);
         return comboDetail.getUnitPrice() * newQuantity;
     }
@@ -529,7 +531,7 @@ public class OrderServiceV2 {
      */
     private double updateSingleItemDetails(OrderDetail orderDetail, String size, int newQuantity) {
         int oldQuantity = orderDetail.getQuantity(); // Lưu số lượng cũ
-        
+
         // Cập nhật thông tin sản phẩm chính
         orderDetail.setQuantity(newQuantity);
         orderDetail.setSize(ProducSizeEnum.valueOf(size));
@@ -542,10 +544,10 @@ public class OrderServiceV2 {
             for (OrderDetail topping : orderDetail.getChildren()) {
                 // Tính số lượng topping mới dựa trên tỷ lệ với số lượng cũ
                 int toppingNewQuantity = (topping.getQuantity() * newQuantity) / oldQuantity;
-                
+
                 topping.setQuantity(toppingNewQuantity);
                 orderDetailRepository.save(topping);
-                
+
                 totalPrice += topping.getUnitPrice() * toppingNewQuantity;
             }
         }
@@ -559,7 +561,7 @@ public class OrderServiceV2 {
      */
     private double calculateDetailPrice(OrderDetail detail) {
         double price = detail.getUnitPrice() * detail.getQuantity();
-        
+
         if (detail.getChildren() != null) {
             for (OrderDetail child : detail.getChildren()) {
                 if (!detail.isCombo()) { // Nếu không phải combo thì mới tính giá topping
@@ -567,26 +569,27 @@ public class OrderServiceV2 {
                 }
             }
         }
-        
+
         return price;
     }
 
     /**
      * Tìm và kiểm tra chi tiết đơn hàng
+     *
      * @param orderDetailId ID của chi tiết đơn hàng
-     * @param orderId ID của đơn hàng
+     * @param orderId       ID của đơn hàng
      * @return Chi tiết đơn hàng nếu tìm thấy và hợp lệ
      * @throws NotFoundException nếu không tìm thấy chi tiết đơn hàng
-     * @throws OrderException nếu chi tiết đơn hàng không thuộc về đơn hàng
+     * @throws OrderException    nếu chi tiết đơn hàng không thuộc về đơn hàng
      */
     private OrderDetail findAndValidateOrderDetail(Long orderDetailId, Long orderId) {
         OrderDetail detail = orderDetailRepository.findById(orderDetailId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy chi tiết đơn hàng"));
-        
+
         if (!detail.getOrders().getId().equals(orderId)) {
             throw new OrderException("Chi tiết đơn hàng không thuộc về đơn hàng này");
         }
-        
+
         return detail;
     }
 
@@ -597,7 +600,7 @@ public class OrderServiceV2 {
                                                                    Pageable pageable) {
 
         String currentUser = userUtils.getCurrentUser().getUsername();
-        Optional<User> user = userRepository.findByEmail( currentUser);
+        Optional<User> user = userRepository.findByEmail(currentUser);
 
         if (user.isEmpty()) {
             throw new NotFoundException("User is not found");

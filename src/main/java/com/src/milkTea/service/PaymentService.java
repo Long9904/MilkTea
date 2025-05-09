@@ -70,6 +70,9 @@ public class PaymentService {
     @Autowired
     private PromotionRepository promotionRepository;
 
+    @Autowired
+    private PromotionService promotionService;
+
     @Transactional
     public Map<String, Object> createMomoPayment(Long orderId, String paymentMethod, Long promotionId) throws Exception {
 
@@ -99,7 +102,13 @@ public class PaymentService {
         if (promotionId != null) {
             // Nếu có promotionId, tìm kiếm promotion và gán cho payment
             Optional<Promotion> promotion = promotionRepository.findById(promotionId);
+            // Check có discount hay không
+
             if (promotion.isPresent()) {
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
                 payment.setPromotion(promotion.get());
                 // Tính toán lại số tiền sau khi áp dụng khuyến mãi
                 double discount = promotion.get().getDiscountPercent();
@@ -208,12 +217,19 @@ public class PaymentService {
         if (payment.getStatus() == TransactionEnum.SUCCESS) {
             return Map.of("message", "Order has been paid!");
         }
+
         String amount = String.valueOf((int) order.getTotalPrice());
         // Xử lí promotion cho payment
         if (promotionId != null) {
             // Nếu có promotionId, tìm kiếm promotion và gán cho payment
             Optional<Promotion> promotion = promotionRepository.findById(promotionId);
             if (promotion.isPresent()) {
+
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
+
                 payment.setPromotion(promotion.get());
                 // Tính toán lại số tiền sau khi áp dụng khuyến mãi
                 double discount = promotion.get().getDiscountPercent();
@@ -321,6 +337,12 @@ public class PaymentService {
             // Nếu có promotionId, tìm kiếm promotion và gán cho payment
             Optional<Promotion> promotion = promotionRepository.findById(promotionId);
             if (promotion.isPresent()) {
+
+                // Kiểm tra có thể áp dụng khuyến mãi không
+                if (!promotionService.checkPromotion(orderId , promotion.get().getId())) {
+                    throw new TransactionException("Promotion is not valid");
+                }
+
                 payment.setPromotion(promotion.get());
                 // Tính toán lại số tiền sau khi áp dụng khuyến mãi
                 double discount = promotion.get().getDiscountPercent();
