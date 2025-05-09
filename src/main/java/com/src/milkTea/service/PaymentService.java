@@ -66,7 +66,7 @@ public class PaymentService {
     private CashDrawerRepository cashDrawerRepository;
 
     @Transactional
-    public Map<String, Object> createMomoPayment(Long orderId, String paymentMethod) throws Exception {
+    public Map<String, Object> createMomoPayment(Long orderId, String paymentMethod, Long promotionId) throws Exception {
 
         if (paymentMethod.equals("CASH")) {
             return Map.of("message", "Re-choosing payment method!");

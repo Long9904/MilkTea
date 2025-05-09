@@ -53,4 +53,11 @@ public class PromotionAPI {
         return ResponseEntity.ok("Promotion status updated successfully");
     }
 
+    @Operation(summary = "Check if a promotion for order is valid")
+    @GetMapping("/check")
+    public ResponseEntity<?> checkPromotion(@RequestParam Long promotionId,
+                                            @RequestParam Long orderId) {
+        return ResponseEntity.ok(promotionService.checkPromotion(promotionId, orderId));
+    }
+
 }

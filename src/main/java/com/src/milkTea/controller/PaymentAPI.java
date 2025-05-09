@@ -23,7 +23,8 @@ public class PaymentAPI {
     public ResponseEntity<?> createPayment(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.createMomoPayment(
                 paymentRequest.getOrderId(),
-                paymentRequest.getPaymentMethod());
+                paymentRequest.getPaymentMethod(),
+                paymentRequest.getPromotionId());
         return ResponseEntity.ok(result);
     }
 
@@ -114,7 +115,7 @@ public class PaymentAPI {
 
 
     // Switch payment method (momo to cash)
-    @Operation(summary = "Switch payment method (momo to cash)")
+    @Operation(summary = "Switch payment method (momo to cash) ERROR: 400")
     @PutMapping("/switch")
     public ResponseEntity<?> switchPaymentMethod(@RequestBody PaymentRequest paymentRequest) throws Exception {
         Map<String, Object> result = paymentService.switchToPaymentWithCash(
