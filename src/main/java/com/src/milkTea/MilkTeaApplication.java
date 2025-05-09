@@ -25,6 +25,7 @@ public class MilkTeaApplication {
 	}
 
 	public static void main(String[] args) {
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 		SpringApplication.run(MilkTeaApplication.class, args);
 	}
 
