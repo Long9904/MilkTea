@@ -15,7 +15,7 @@ public interface OrderRepository extends JpaRepository<Orders, Long>, JpaSpecifi
             "COUNT(o.id) AS totalOrders, " +
             "SUM(o.totalPrice) AS totalRevenue " +
             "FROM Orders o " +
-            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID " +
+            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID OR o.status = com.src.milkTea.enums.OrderStatusEnum.DELIVERED OR o.status = com.src.milkTea.enums.OrderStatusEnum.PREPARING " +
             "GROUP BY DATE(o.createAt) " +
             "ORDER BY orderDate DESC")
     List<Object[]> getRevenueByDay();
@@ -25,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Orders, Long>, JpaSpecifi
             "COUNT(o.id) AS totalOrders, " +
             "SUM(o.totalPrice) AS totalRevenue " +
             "FROM Orders o " +
-            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID " +
+            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID OR o.status = com.src.milkTea.enums.OrderStatusEnum.DELIVERED OR o.status = com.src.milkTea.enums.OrderStatusEnum.PREPARING " +
             "GROUP BY DATE_FORMAT(o.createAt, '%Y-%u') " +
             "ORDER BY week DESC")
     List<Object[]> getRevenueByWeek();
@@ -35,7 +35,7 @@ public interface OrderRepository extends JpaRepository<Orders, Long>, JpaSpecifi
             "COUNT(o.id) AS totalOrders, " +
             "SUM(o.totalPrice) AS totalRevenue " +
             "FROM Orders o " +
-            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID " +
+            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID OR o.status = com.src.milkTea.enums.OrderStatusEnum.DELIVERED OR o.status = com.src.milkTea.enums.OrderStatusEnum.PREPARING " +
             "GROUP BY DATE_FORMAT(o.createAt, '%Y-%m') " +
             "ORDER BY month DESC")
     List<Object[]> getRevenueByMonth();
@@ -45,7 +45,7 @@ public interface OrderRepository extends JpaRepository<Orders, Long>, JpaSpecifi
             "COUNT(o.id) AS totalOrders, " +
             "SUM(o.totalPrice) AS totalRevenue " +
             "FROM Orders o " +
-            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID " +
+            "WHERE o.status = com.src.milkTea.enums.OrderStatusEnum.PAID OR o.status = com.src.milkTea.enums.OrderStatusEnum.DELIVERED OR o.status = com.src.milkTea.enums.OrderStatusEnum.PREPARING " +
             "GROUP BY YEAR(o.createAt) " +
             "ORDER BY year DESC")
     List<Object[]> getRevenueByYear();

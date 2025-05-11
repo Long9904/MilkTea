@@ -41,7 +41,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "join od.product p " +
             "where p.productUsage = 'MAIN' " +
             "and od.parent is null " +
-            "and o.status = 'PAID' " +
+            "and o.status = 'PAID' or o.status = 'DELIVERED' " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
@@ -54,7 +54,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
             "and od.parent is null " +
-            "and o.status = 'PAID' " +
+            "and o.status = 'PAID' or o.status = 'DELIVERED' " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
@@ -66,7 +66,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "join od.product p " +
             "where p.productUsage = :productUsageEnum " +
             "and od.parent is not null " +
-            "and o.status = 'PAID' " +
+            "and o.status = 'PAID' or o.status = 'DELIVERED' " +
             "group by p.id " +
             "order by totalSold desc " +
             "limit 3")
@@ -78,7 +78,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "WHERE p.productUsage = 'MAIN' " +
             "AND od.parent is null " +
             "AND p.productType = 'SINGLE' " +
-            "AND o.status = 'PAID'")
+            "AND o.status = 'PAID' or o.status = 'DELIVERED'")
     Long getTotalSingleProductsSold();
 
     @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
@@ -87,13 +87,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "WHERE p.productUsage = 'MAIN' " +
             "AND od.parent is null " +
             "AND p.productType = 'COMBO' " +
-            "AND o.status = 'PAID'")
+            "AND o.status = 'PAID' or o.status = 'DELIVERED'")
     Long getTotalCombosSold();
 
     @Query("SELECT SUM(od.quantity) FROM OrderDetail od " +
             "JOIN od.orders o " +
             "JOIN od.product p " +
             "WHERE p.productUsage = 'EXTRA' " +
-            "AND o.status = 'PAID'")
+            "AND o.status = 'PAID' or o.status = 'DELIVERED'")
     Long getTotalExtrasSold();
 }
