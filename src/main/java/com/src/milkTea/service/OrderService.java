@@ -13,6 +13,7 @@ import com.src.milkTea.exception.StatusException;
 import com.src.milkTea.repository.*;
 import com.src.milkTea.specification.OrderSpecification;
 import com.src.milkTea.utils.UserUtils;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,8 @@ public class OrderService {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private CashDrawerRepository cashDrawerRepository;
     public Orders addItemToCart(OrderRequest orderRequest) {
 
         Orders order = new Orders();
@@ -282,6 +285,7 @@ public class OrderService {
         return buildOrderDetailTree(orderDetails);
     }
 
+    @Transactional
     public void updateOrderStatus(Long id, String status) {
 
         // Validate order status
@@ -298,6 +302,18 @@ public class OrderService {
         OrderStatusEnum orderStatus = OrderStatusEnum.valueOf(status);
         if (orderStatus == OrderStatusEnum.CANCELLED) {
             order.setStatus(OrderStatusEnum.CANCELLED);
+            // xừ lí trả hàng
+            // Trừ tiền trong két
+            Payment payment = paymentRepository.findByOrderId(id)
+                    .orElseThrow(() -> new NotFoundException("Payment not found"));
+            CashDrawer cashDrawer = payment.getCashDrawer();
+            if (cashDrawer != null) {
+                cashDrawer.setCurrentBalance(cashDrawer.getCurrentBalance() - Double.parseDouble(payment.getAmount()));
+                cashDrawer.setActualBalance(cashDrawer.getActualBalance() - Double.parseDouble(payment.getAmount()));
+                cashDrawer.setNote("Refund for order " + id);
+                cashDrawerRepository.save(cashDrawer);
+            }
+
         } else if (orderStatus == OrderStatusEnum.DELIVERED) {
             order.setStatus(OrderStatusEnum.DELIVERED);
         } else if (orderStatus == OrderStatusEnum.PAID) {
